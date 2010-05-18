@@ -1,1 +1,3 @@
 Code during GSoC 2010, for the project PCManFM.
+
+18/05/2010 - Plan to write the .desktop parser module independent of GTK bindings

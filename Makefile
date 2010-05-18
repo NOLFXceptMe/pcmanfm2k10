@@ -3,9 +3,12 @@ CFLAGS=-Wall -g -O2
 LD=gcc
 LDFLAGS=
 
-parser:
+BIN=main
+OBJS=parser.o
 
-all: parser
+all: main
+
+main: $(OBJS)
 
 clean:
-	rm -f $(BINDIR)/*
+	rm -f $(OBJS) $(BIN)

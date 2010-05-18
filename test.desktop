@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=MultiProxy
+Exec=env WINEPREFIX="/home/npower/.wine" wine "C:\\Program Files\\MultiProxy\\mproxy.exe" 
+Type=Application
+StartupWMClass=Wine
+Comment=MultiProxy personal server
+Path=/home/npower/.wine/dosdevices/c:/Program Files/MultiProxy
+Icon=89c7_mproxy.0
