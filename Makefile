@@ -1,7 +1,8 @@
 CC=gcc
-CFLAGS=-Wall -g -O2
+CFLAGS=-Wall -g
+CFLAGS+=`pkg-config --cflags glib-2.0`
 LD=gcc
-LDFLAGS=
+LDFLAGS+=`pkg-config --libs glib-2.0`
 
 BIN=main
 OBJS=parser.o

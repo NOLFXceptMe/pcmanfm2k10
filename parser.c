@@ -8,82 +8,40 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
+#include<stdio.h>
+#include<glib.h>
 
-#include "parser.h"
-
-#define LINESZ	255
-#define STRSZ	255
-#define KEYSZ	STRSZ
-#define VALSZ	STRSZ
-
-#define KEYEXTRACTION 1
-#define VALEXTRACTION 2
-
-char inputLine[LINESZ] = {'\0'};
-
-/* TODO: change type of fileName to FmPath */
-int parse(char *fileName)
+int parse(gchar* file_name)
 {
-	int fd = open(fileName, O_RDONLY);
+	GKeyFile *keyfile;
+	GKeyFileFlags flags;
+	GError *error = NULL;
+	gsize n_groups, n_keys;
+	gchar **group_names, **key_names;
+	gsize i, j;
 
-	char buf;
-	size_t index = 0, lineCount = 0;
-	memset(inputLine, '\0', LINESZ);
+	keyfile = g_key_file_new();
+	flags = G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS;
 
-	while(read(fd, &buf, 1) != 0){
-		//printf("%c", buf);
-		inputLine[index++] = (char )buf;
-		if(buf == '\n'){
-			parseLine();
-			//printf("%s", inputLine);
-			index = 0;
-			memset(inputLine, 0, LINESZ);
-			++lineCount;
-		}
-	}
-
-	return lineCount;
-}
-
-int parseLine()
-{
-	//printf("Parsing line %s", inputLine);
-	size_t lineIndex = 0, keyIndex = 0, valIndex = 0;
-	char key[KEYSZ], value[VALSZ];
-	char buf;
-	memset(key, 0, KEYSZ);
-	memset(value, 0, VALSZ);
-		
-	size_t stateLineParser = KEYEXTRACTION;
-
-	if((inputLine[0] == '#')||(inputLine[0] == '[')||(inputLine[0] == ' ')){
-		//printf("Skipping line starting with %c\n", inputLine[0]);
+	if(!g_key_file_load_from_file(keyfile, file_name, flags, &error)){
+		fprintf(stderr, error->message);
 		return -1;
 	}
 
-	while((buf = inputLine[lineIndex++])!= '\n'){
-		if(buf == '=') stateLineParser = VALEXTRACTION;
-		else if(stateLineParser == KEYEXTRACTION)
-			key[keyIndex++] = buf;
-		else if(stateLineParser == VALEXTRACTION)
-			value[valIndex++] = buf;
+	group_names = g_key_file_get_groups(keyfile, &n_groups);
+	printf("Number of groups = %u\n", n_groups);
+
+	/* Print extracted key pairs */
+	for(i=0;i<n_groups;++i){
+		printf("Name of the group is %s\n", group_names[i]);
+
+		key_names = g_key_file_get_keys(keyfile, group_names[i], &n_keys, NULL);
+		printf("Number of keys = %u\n", n_keys);
+
+		for(j=0;j<n_keys;++j){
+			printf("Extracted key-value pair %s = %s\n", key_names[j], g_key_file_get_value(keyfile, group_names[i], key_names[j], &error));
+		}
 	}
 
-	printf("Extracted key-value pair %s = %s\n", key, value);
-
 	return 0;
 }
-
-/*
-int main()
-{
-	size_t lineCount = parse("test.desktop");
-	printf("Line count = %d\n", lineCount);
-	return 0;
-}
-*/
