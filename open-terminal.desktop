@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name = Open terminal here
+Tooltip = Open a new terminal here
+Icon = terminal
+Profiles = on_folder; on_file; on_desktop;
+
+[X-Action-Profile on_folder]
+Name = open a terminal on the current folder or on the selected folder
+MimeTypes = inode/directory;
+# note that this means strictly less than 2, as the equal sign is part of the DES syntax
+SelectionCount = < 2
+Exec = gnome-terminal --working-directory=%d
+
+[X-Action-Profile on_file]
+Name = open a terminal in the folder which contains selected items
+MimeTypes = all/allfiles;
+Exec = gnome-terminal --working-directory=$(echo %D | cut -d' ' -f1)
+
+[X-Action-Profile on_desktop]
+Name = open a terminal of the desktop
+Schemes = x-nautilus-desktop;
+Exec = gnome-terminal --working-directory=~/Desktop

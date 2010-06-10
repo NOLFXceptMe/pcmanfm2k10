@@ -1,4 +1,1 @@
 Code during GSoC 2010, for the project PCManFM.
-
-18/05/2010 - Plan to write the .desktop parser module independent of GTK bindings
-22/05/2010 - Should rewrite the parser. Mentor suggested use of GKeyFile. And the previous entry should've read.. "independent of GNOME library bindings"
