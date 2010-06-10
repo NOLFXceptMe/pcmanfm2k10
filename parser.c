@@ -12,17 +12,18 @@
 #include<glib.h>
 #include "parser.h"
 
-int parse(gchar* file_name)
+FmDesktopEntry* parse(gchar* file_name)
 {
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;
 	GError *error = NULL;
 	gsize n_groups;
-	gchar *desktop_file_id, **group_names;
+	gchar **group_names;
 	gsize i;
 	gchar *type_string;
 	gchar *profile_id;
 	guint type;
+	FmDesktopEntry *fmDesktopEntry = NULL;
 	FmActionEntry *fmActionEntry;
 	FmProfileEntry *fmProfileEntry;
 	FmMenuEntry *fmMenuEntry;
@@ -32,13 +33,21 @@ int parse(gchar* file_name)
 
 	if(!g_key_file_load_from_file(keyfile, file_name, flags, &error)){
 		fprintf(stderr, "%s\n", error->message);
-		return -1;
+		return NULL;
 	}
 
-	/* Extract file_id */
-	desktop_file_id = g_strndup(file_name, strlen(file_name) - strlen(strrchr(file_name, '.')));
+	/* Initialize desktop entry structure */
+	fmDesktopEntry = g_slice_new0(FmDesktopEntry);
+	fmDesktopEntry->desktop_file_id = g_strndup(file_name, strlen(file_name) - strlen(strrchr(file_name, '.')));
+	fmDesktopEntry->n_action_entries = 0;
+	fmDesktopEntry->n_profile_entries = 0;
+	fmDesktopEntry->n_menu_entries = 0;
+	fmDesktopEntry->fmActionEntries = g_ptr_array_new();
+	fmDesktopEntry->fmProfileEntries = g_ptr_array_new();
+	fmDesktopEntry->fmMenuEntries = g_ptr_array_new();
+
 #ifndef NDEBUG
-	printf("Extracted file_id is %s\n", desktop_file_id);
+	printf("Extracted file_id is %s\n", fmDesktopEntry->desktop_file_id);
 #endif
 	
 	group_names = g_key_file_get_groups(keyfile, &n_groups);
@@ -59,10 +68,14 @@ int parse(gchar* file_name)
 			if(type_string == NULL || g_strcmp0(type_string, "Action") == 0){
 				type = ACTION_ENTRY;
 				fmActionEntry = parse_action_entry(keyfile, group_names[i]);
+				fmDesktopEntry->n_action_entries++;
+				g_ptr_array_add(fmDesktopEntry->fmActionEntries, (gpointer) fmActionEntry);
 			}
 			else if(g_strcmp0(type_string, "Menu") == 0){
 				type = MENU_ENTRY;
 				fmMenuEntry = parse_menu_entry(keyfile, group_names[i]);
+				fmDesktopEntry->n_menu_entries++;
+				g_ptr_array_add(fmDesktopEntry->fmMenuEntries, (gpointer) fmMenuEntry);
 			}
 			else
 				type = UNKNOWN_ENTRY;
@@ -70,11 +83,12 @@ int parse(gchar* file_name)
 			type = PROFILE_ENTRY;
 			profile_id = g_strdup(group_names[i]+ 17);		/* "X-Action-Profile " is 17 characters long */
 			fmProfileEntry = parse_profile_entry(keyfile, group_names[i]);
+			fmDesktopEntry->n_profile_entries++;
+			g_ptr_array_add(fmDesktopEntry->fmProfileEntries, (gpointer) fmProfileEntry);
 		} else {
 			type = UNKNOWN_ENTRY;
 		}
 		
-
 #ifndef NDEBUG
 		switch(type){
 			case ACTION_ENTRY:
@@ -92,10 +106,10 @@ int parse(gchar* file_name)
 			default:
 				break;
 		};
-	}
 #endif
+	}
 
-	return 0;
+	return fmDesktopEntry;
 }
 
 FmActionEntry* parse_action_entry(GKeyFile *keyfile, gchar *group_name)

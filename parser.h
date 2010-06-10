@@ -13,6 +13,7 @@ typedef struct _FmActionEntry FmActionEntry;
 typedef struct _FmProfileEntry FmProfileEntry;
 typedef struct _FmMenuEntry FmMenuEntry;
 typedef struct _FmConditions FmConditions;
+typedef struct _FmDesktopEntry FmDesktopEntry;
 
 struct _FmActionEntry {
 	gchar *type;			/* string, not reqd */
@@ -78,7 +79,13 @@ struct _FmConditions {
 	gchar **capabilities;				/* strings list, not reqd */
 };
 
-int parse(gchar *fileName);
+struct _FmDesktopEntry {
+	gchar *desktop_file_id;
+	gsize n_action_entries, n_profile_entries, n_menu_entries;
+	GPtrArray *fmActionEntries, *fmProfileEntries, *fmMenuEntries;
+};
+
+FmDesktopEntry* parse(gchar *fileName);
 FmActionEntry* parse_action_entry(GKeyFile *, gchar *);
 FmProfileEntry* parse_profile_entry(GKeyFile *, gchar *);
 FmMenuEntry* parse_menu_entry(GKeyFile *, gchar *);
