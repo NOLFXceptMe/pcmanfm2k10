@@ -9,6 +9,6 @@
 
 int main()
 {
-	int ret_val = parse("open-terminal.desktop");
+	parse("open-terminal.desktop");
 	return 0;
 }
