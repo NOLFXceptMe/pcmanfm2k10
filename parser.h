@@ -35,6 +35,7 @@ struct _FmActionEntry {
 };
 
 struct _FmProfileEntry {
+	gchar *id;
 	gchar *name;			/* localestring, not reqd */
 	gchar *exec;			/* string, reqd */
 	gchar *path;			/* string, not reqd */
@@ -90,6 +91,5 @@ FmActionEntry* parse_action_entry(GKeyFile *, gchar *);
 FmProfileEntry* parse_profile_entry(GKeyFile *, gchar *);
 FmMenuEntry* parse_menu_entry(GKeyFile *, gchar *);
 FmConditions* parse_conditions(GKeyFile *, gchar *);
-
 
 #endif

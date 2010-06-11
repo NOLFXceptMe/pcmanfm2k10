@@ -83,6 +83,10 @@ FmDesktopEntry* parse(gchar* file_name)
 			type = PROFILE_ENTRY;
 			profile_id = g_strdup(group_names[i]+ 17);		/* "X-Action-Profile " is 17 characters long */
 			fmProfileEntry = parse_profile_entry(keyfile, group_names[i]);
+			if(fmProfileEntry == NULL)
+				continue;
+
+			fmProfileEntry->id = g_strdup(profile_id);
 			fmDesktopEntry->n_profile_entries++;
 			g_ptr_array_add(fmDesktopEntry->fmProfileEntries, (gpointer) fmProfileEntry);
 		} else {

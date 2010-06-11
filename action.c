@@ -8,7 +8,7 @@
 #include<stdio.h>
 #include "parser.h"
 
-int main()
+int main(int argc, char *argv[])
 {
 	gsize i, j;
 	FmActionEntry *fmActionEntry;
@@ -16,7 +16,7 @@ int main()
 	FmMenuEntry *fmMenuEntry;
 	GPtrArray *fmActionEntries, *fmProfileEntries, *fmMenuEntries;
 
-	FmDesktopEntry *desktop_entry = parse("open-terminal.desktop");
+	FmDesktopEntry *desktop_entry = parse(argv[1]);
 
 	/* Extract data */
 	printf("Desktop file_id = %s\n", desktop_entry->desktop_file_id);
@@ -55,8 +55,8 @@ int main()
 	fmActionEntry->targetlocation = printf();
 	fmActionEntry->targettoolbar = printf();
 	fmActionEntry->toolbarlabel = printf();
-	}
 	*/
+	}
 
 	/* Extract profile entries data */
 	for(i=0;i<desktop_entry->n_profile_entries;++i){
