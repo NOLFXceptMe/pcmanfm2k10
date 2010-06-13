@@ -75,7 +75,10 @@ int main(int argc, char *argv[])
 		printf("%s is a valid action\n", fmActionEntry->name);
 	}
 
-	/* Show menu */
+	/* Validate menus */
+
+	/* Show context menu */
+	/* Context menu will show valid actions and menus */
 
 	return 0;
 }
