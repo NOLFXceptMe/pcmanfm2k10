@@ -6,7 +6,10 @@
  */
 
 #include<glib.h>
+#include<glib/gstdio.h>
 #include<stdio.h>
+#include<features.h>
+#include<stdlib.h>
 
 #include "parser.h"
 
@@ -18,6 +21,9 @@ gboolean validate_conditions(FmConditions *conditions);
 
 gchar *environment = "LXDE";
 gchar *mime_type = "text/plain";
+gsize n_base_names = 2;
+gchar *base_names[] = { "h", "c" };
+gsize selection_count = 3;
 GPtrArray *valid_profiles, *valid_actions;
 gsize n_valid_profiles = 0, n_valid_actions = 0;
 
@@ -146,10 +152,29 @@ void validate_action(gpointer key, gpointer value, gpointer action_array)
 
 gboolean validate_conditions(FmConditions *conditions)
 {
+	/* Please note notation
+	 * conditions->fieldname is of type as defined as in parser.h
+	 * fieldname is a gboolean to be used in this function
+	 * field_name is a global variable in this file to be used as the "environment" setup for validating conditions
+	 * TODO: Find a better notation :)
+	 */
+
 	gsize i;
 	gboolean isValid = TRUE;
 	gboolean onlyshowin = TRUE, notshowin = TRUE;
+	gboolean tryexec = TRUE;
+	gboolean showifregistered = TRUE, showiftrue = TRUE, showifrunning = TRUE;
 	gboolean mimetypes = FALSE;
+	gboolean basenames = TRUE, matchcase = TRUE;
+	gboolean selectioncount = TRUE;
+	gboolean schemes = TRUE, folderlist = TRUE, capabilities = TRUE;
+
+	FILE *fp;
+	gchar line[255];
+	gchar *selection_count_string;
+	gsize selection_count_size;
+	//gchar *base_name_string;
+
 
 	/* OnlyShowIn/NotShowIn validation */
 	if(conditions->onlyshowin != NULL){
@@ -166,16 +191,155 @@ gboolean validate_conditions(FmConditions *conditions)
 		return isValid;
 	}
 
+	/* TryExec validation */
+	if(conditions->tryexec != NULL){
+		if(!(g_file_test(conditions->tryexec, G_FILE_TEST_EXISTS) == TRUE && g_file_test(conditions->tryexec, G_FILE_TEST_IS_EXECUTABLE) == TRUE))
+			tryexec = FALSE;
+	}
+
+	if(tryexec == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* ShowIfRegistered validation */
+	/* TODO: How do I access D-Bus using Glib? */
+
+	if(showifregistered == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* ShowIfTrue validation */
+	/* TODO: Used popen, should that be fine? */
+	if(conditions->showiftrue != NULL){
+		printf("Here 1");
+		fp = popen(conditions->showiftrue, "r");
+		memset(line, 255, 0);
+		while(fgets(line, 255, fp)){
+			if(g_strcmp0(g_strstrip(line), "true") != 0){
+				showiftrue = FALSE;
+				break;
+			}
+		}
+		pclose(fp);
+	}
+
+	if(showiftrue == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* ShowIfRunning validation */
+	/* We use popen() and pgrep here */
+	printf("Here 2");
+	if(conditions->showifrunning != NULL){
+		fp = popen(g_strconcat("pgrep ", conditions->showifrunning, NULL), "r");
+		memset(line, 255, 0);
+		fgets(line, 255, fp);
+		if(g_strcmp0(g_strstrip(line), "") == 0){
+			showifrunning = FALSE;
+		}
+	}
+	
+	if(showifrunning == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
 	/* Mimetypes validation */
 	if(conditions->n_mimetypes > 0){
 		for(i=0;i<conditions->n_mimetypes;++i)
 			if(g_strcmp0(conditions->mimetypes[i], mime_type) == 0)
 				mimetypes = TRUE;
-	} else {
+	} else {						/* No mimetypes specified, defaults to *, so valid */
 		mimetypes = TRUE;
 	}
 
 	if(mimetypes == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* The following two conditions, matchcase and basenames are to be validated together */
+	/* MatchCase evalutation*/
+	if(conditions->n_basenames > 0){
+		matchcase = conditions->matchcase;
+
+		/* Basenames validation */
+		/*
+		for(i=0;i<conditions->n_basenames;++i){
+			base_name_string = g_strstrip(conditions->basenames[i]);
+			for(j=0;j<n_base_names;++j){
+				if(matchcase == FALSE){
+					if(base_name_string[0] == '!' && g_ascii_strcasecmp(base_name_string+1, base_names[j]))
+				}
+			}
+		}
+		*/
+	}
+
+	if(basenames == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* Selection count validation */
+	if(conditions->selectioncount == NULL){
+		if(selection_count == 0)
+			selectioncount = FALSE;
+		else
+			selectioncount = TRUE;
+	} else {
+		/* Parse the selection count string */
+		selection_count_string = g_strstrip(g_strdup(conditions->selectioncount));
+		selection_count_size = atoi(selection_count_string + 1);
+		switch(selection_count_string[0]){
+			case '<':
+				if(!(selection_count < selection_count_size))
+					selectioncount = FALSE;
+				break;
+			case '=':
+				if(!(selection_count == selection_count_size))
+					selectioncount = FALSE;
+				break;
+			case '>':
+				if(!(selection_count > selection_count_size))
+					selectioncount = FALSE;
+				break;
+			default:
+				selectioncount = TRUE;
+		}
+	}
+
+	if(selectioncount == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* Schemes validation */
+	if(conditions->n_schemes != 0){
+	}
+
+	if(schemes == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* Folderlist validation */
+	if(conditions->n_folderlist != 0){
+	}
+
+	if(folderlist == FALSE){
+		isValid = FALSE;
+		return isValid;
+	}
+
+	/* Capabilities validation */
+	if(conditions->n_capabilities!= 0){
+	}
+
+	if(capabilities == FALSE){
 		isValid = FALSE;
 		return isValid;
 	}
