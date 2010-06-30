@@ -37,14 +37,6 @@ int main(int argc, char *argv[])
 
 	FmDesktopEntry *desktop_entry = parse(argv[1]);
 
-	/* Extract data */
-	/*
-	printf("Desktop file_id = %s\n", desktop_entry->desktop_file_id);
-	printf("Number of action definitions = %u\n", desktop_entry->n_action_entries);
-	printf("Number of profile definitions = %u\n", desktop_entry->n_profile_entries);
-	printf("Number of menu definitions = %u\n", desktop_entry->n_menu_entries);
-	*/
-
 	fmProfileEntries = desktop_entry->fmProfileEntries;
 	fmActionEntries = desktop_entry->fmActionEntries;
 
@@ -213,12 +205,12 @@ gboolean validate_conditions(FmConditions *conditions)
 	/* ShowIfTrue validation */
 	/* TODO: Used popen, should that be fine? */
 	if(conditions->showiftrue != NULL){
-		printf("Here 1");
+		showiftrue = FALSE;
 		fp = popen(conditions->showiftrue, "r");
 		memset(line, 255, 0);
 		while(fgets(line, 255, fp)){
-			if(g_strcmp0(g_strstrip(line), "true") != 0){
-				showiftrue = FALSE;
+			if(g_strcmp0(g_strstrip(line), "true") == 0){
+				showiftrue = TRUE;
 				break;
 			}
 		}

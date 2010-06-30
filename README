@@ -1,1 +1,32 @@
 Code during GSoC 2010, for the project PCManFM.
+
+Features tested
+---------------
+- Detect Actions, Profiles, and Menus
+- Read in all data necessary and store in data structures
+
+- Implemented for Actions
+-------------------------
+- Validate actions according to conditions and profiles [in that order]
+
+- Implemented for Profiles
+-------------------------
+- Validate profiles according to conditions
+
+- Implemented for Menus
+-------------------------
+
+- Implementation of Condition Validation
+----------------------------------------
+DONE: OnlyShowIn, NotShowIn
+DONE: TryExec
+TODO: ShowIfRegistered
+DONE: ShowIfTrue
+DONE: ShowIfRunning
+TODO: MimeTypes
+TODO: Basenames
+TODO: Matchcase
+DONE: SelectionCount
+TODO: Schemes
+TODO: Folders
+TODO: Capabilities

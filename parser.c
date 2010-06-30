@@ -65,31 +65,54 @@ FmDesktopEntry* parse(gchar* file_name)
 		 * For now assuming that group headers are case insensitive, hence using g_ascii_strcasecmp().  If case sensitive, shift to g_strcmp0() */
 		if(g_ascii_strcasecmp(group_names[i], "Desktop Entry") == 0){
 			type_string = g_key_file_get_string(keyfile, group_names[i], "Type", NULL);
+
 			if(type_string == NULL || g_strcmp0(type_string, "Action") == 0){
 				type = ACTION_ENTRY;
 				fmActionEntry = parse_action_entry(keyfile, group_names[i]);
-				fmDesktopEntry->n_action_entries++;
-				g_ptr_array_add(fmDesktopEntry->fmActionEntries, (gpointer) fmActionEntry);
+				if(fmActionEntry != NULL){
+					fmDesktopEntry->n_action_entries++;
+					g_ptr_array_add(fmDesktopEntry->fmActionEntries, (gpointer) fmActionEntry);
+				}
 			}
+			
 			else if(g_strcmp0(type_string, "Menu") == 0){
 				type = MENU_ENTRY;
 				fmMenuEntry = parse_menu_entry(keyfile, group_names[i]);
-				fmDesktopEntry->n_menu_entries++;
-				g_ptr_array_add(fmDesktopEntry->fmMenuEntries, (gpointer) fmMenuEntry);
+				if(fmMenuEntry != NULL){
+					fmDesktopEntry->n_menu_entries++;
+					g_ptr_array_add(fmDesktopEntry->fmMenuEntries, (gpointer) fmMenuEntry);
+				}
 			}
-			else
+			
+			else if(g_strcmp0(type_string, "Application") == 0){
+				type = APPLICATION_ENTRY;
+			}
+			
+			else if(g_strcmp0(type_string, "Link") == 0){
+				type = LINK_ENTRY;
+			}
+
+			else if(g_strcmp0(type_string, "Directory") == 0){
+				type = DIRECTORY_ENTRY;
+			}
+			
+			else {
 				type = UNKNOWN_ENTRY;
-		} else if(g_str_has_prefix(group_names[i], "X-Action-Profile ") == TRUE){
+			}
+		}
+		
+		else if(g_str_has_prefix(group_names[i], "X-Action-Profile ") == TRUE){
 			type = PROFILE_ENTRY;
 			profile_id = g_strdup(group_names[i]+ 17);		/* "X-Action-Profile " is 17 characters long */
 			fmProfileEntry = parse_profile_entry(keyfile, group_names[i]);
-			if(fmProfileEntry == NULL)
-				continue;
-
-			fmProfileEntry->id = g_strdup(profile_id);
-			fmDesktopEntry->n_profile_entries++;
-			g_ptr_array_add(fmDesktopEntry->fmProfileEntries, (gpointer) fmProfileEntry);
-		} else {
+			if(fmProfileEntry != NULL){
+				fmProfileEntry->id = g_strdup(profile_id);
+				fmDesktopEntry->n_profile_entries++;
+				g_ptr_array_add(fmDesktopEntry->fmProfileEntries, (gpointer) fmProfileEntry);
+			}
+		} 
+		
+		else {
 			type = UNKNOWN_ENTRY;
 		}
 		
@@ -121,7 +144,8 @@ FmActionEntry* parse_action_entry(GKeyFile *keyfile, gchar *group_name)
 	FmActionEntry *ae = g_slice_new0(FmActionEntry);
 	GError *error = NULL;
 
-	ae->name = g_key_file_get_locale_string(keyfile, group_name, "Name", NULL, &error);
+	/* TODO: We have a problem here with parsing locale strings */
+	ae->name = g_key_file_get_locale_string(keyfile, group_name, "Name", "en_US.UTF-8", &error);
 	if(ae->name == NULL){
 #ifndef NDEBUG
 		fprintf(stderr, "%s\n", error->message);
@@ -214,6 +238,7 @@ FmConditions* parse_conditions(GKeyFile *keyfile, gchar *group_name)
 	conditions->matchcase = g_key_file_get_boolean(keyfile, group_name, "MatchCase", &error);
 	if(error->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND|| error->code == G_KEY_FILE_ERROR_INVALID_VALUE){
 		conditions->matchcase = TRUE;
+		error = NULL;
 	}
 
 	conditions->selectioncount = g_key_file_get_string(keyfile, group_name, "SelectionCount", NULL);

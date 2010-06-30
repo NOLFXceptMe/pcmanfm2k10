@@ -19,4 +19,5 @@ Exec = gnome-terminal --working-directory=$(echo %D | cut -d' ' -f1)
 [X-Action-Profile on_desktop]
 Name = open a terminal of the desktop
 Schemes = x-nautilus-desktop;
+ShowIfRunning = firefox
 Exec = gnome-terminal --working-directory=~/Desktop

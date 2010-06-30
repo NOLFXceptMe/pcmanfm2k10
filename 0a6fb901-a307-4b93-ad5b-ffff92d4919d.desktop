@@ -1,0 +1,15 @@
+
+[Desktop Entry]
+Type=Action
+ToolbarLabel[en_US.UTF-8]=Shred
+Icon[en_US.UTF-8]=gtk-dialog-warning
+Tooltip[en_US.UTF-8]=This will shred the file and hide the fact.
+#Name=Shred
+Name[en_US.UTF-8]=Shred
+#Name[en_US]=Shred
+Profiles=profile-pre-v2;
+
+[X-Action-Profile profile-pre-v2]
+Exec=shred -f -n 10 -u -v -z %M
+Schemes=file;
+Name[en_US.UTF-8]=Profile automatically created from pre-v2 action

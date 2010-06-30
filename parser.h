@@ -4,10 +4,13 @@
 #include<string.h>
 #include<glib.h>
 
-#define UNKNOWN_ENTRY	1
-#define ACTION_ENTRY	1<<1
-#define PROFILE_ENTRY	1<<2
-#define MENU_ENTRY		1<<3
+#define UNKNOWN_ENTRY		1
+#define ACTION_ENTRY		1<<1
+#define PROFILE_ENTRY		1<<2
+#define MENU_ENTRY			1<<3
+#define APPLICATION_ENTRY	1<<4
+#define LINK_ENTRY			1<<5
+#define DIRECTORY_ENTRY		1<<6
 
 typedef struct _FmActionEntry FmActionEntry;
 typedef struct _FmProfileEntry FmProfileEntry;
