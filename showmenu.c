@@ -11,25 +11,32 @@
 #include<features.h>
 #include<stdlib.h>
 
-#include "parser.h"
+#include<libfm/fm.h>
+#include<libfm/fm-file-info.h>
+#include<libfm/fm-file-info-job.h>
+#include<libfm/fm-path.h>
+#include<libfm/fm-list.h>
 
-GPtrArray* retrieve_valid_profiles(GHashTable *fmProfiles);
-GPtrArray* retrieve_valid_actions(GHashTable *fmActions);
-void validate_profile(gpointer key, gpointer value, gpointer profile_array);
-void validate_action(gpointer key, gpointer value, gpointer action_array);
-gboolean validate_conditions(FmConditions *conditions);
+#include "parser.h"
+#include "validation.h"
+
+void print_file_info(gpointer, gpointer);
+//void add_to_file_info_list(gpointer data, gpointer user_data);
+
+void add_to_mime_types(gpointer data, gpointer user_data);
+void add_to_base_names(gpointer data, gpointer user_data);
 
 gchar *environment = "LXDE";
-gchar *mime_type = "text/plain";
-gsize n_base_names = 2;
-gchar *base_names[] = { "h", "c" };
-gsize selection_count = 3;
-GPtrArray *valid_profiles, *valid_actions;
-gsize n_valid_profiles = 0, n_valid_actions = 0;
+gsize selection_count;
+GPtrArray *mime_types = NULL, *base_names = NULL;
+//GPtrArray *valid_profiles = NULL, *valid_actions = NULL;
 
 int main(int argc, char *argv[])
 {
-	gsize i/*, j*/;
+	g_type_init();
+	fm_init(NULL);
+
+	gsize i;
 	FmProfileEntry *fmProfileEntry;
 	FmActionEntry *fmActionEntry;
 	GPtrArray *fmProfileEntries, *fmActionEntries;
@@ -42,6 +49,8 @@ int main(int argc, char *argv[])
 
 	fmProfiles = g_hash_table_new(NULL, NULL);
 	fmActions = g_hash_table_new(NULL, NULL);
+	mime_types = g_ptr_array_new();
+	base_names = g_ptr_array_new();
 
 	for(i=0;i<desktop_entry->n_profile_entries;++i){
 		fmProfileEntry = g_ptr_array_index(fmProfileEntries, i);
@@ -53,22 +62,51 @@ int main(int argc, char *argv[])
 		g_hash_table_insert(fmActions, fmActionEntry->name, fmActionEntry);
 	}
 
-
 	/* Set some base conditions */
 	/* Environment: LXDE
-	 * MimeType: text/plain
 	 */
+	/* Make entries into the path_list, manually */
+	//path_list = fm_path_list_new_from_uris((const char **)uris);
+	FmPathList *path_list = fm_path_list_new();
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.h"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
+	
+	/* Make a list of file infos from the path_list */
+	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
+	FmJob *job = fm_file_info_job_new(path_list, FM_FILE_INFO_JOB_NONE);
+	fm_job_run_sync(job);
+	FmFileInfoList *file_info_list = ((FmFileInfoJob *)job)->file_infos;
+
+	/* If fm_file_info_job_new() doesn't work for some reason, manually enter the file infos into the file_info_list */
+	//FmFileInfo *file_info = NULL;
+	//fm_list_foreach(path_list, add_to_file_info_list, file_info_list);
+	
+	/*
+	if(file_info_list){
+		printf("Have %d files selected\n", fm_list_get_length(file_info_list));
+		fm_list_foreach(file_info_list, print_file_info, NULL);
+	}
+	*/
+
+	/* Now evaluate other data depending on the files_selected */
+	selection_count = fm_list_get_length(file_info_list);
+	fm_list_foreach(file_info_list, add_to_mime_types, mime_types);
+	fm_list_foreach(file_info_list, add_to_base_names, base_names);
+	/* Pre-processing done */
 
 	/* Validate profiles */
-	valid_profiles = retrieve_valid_profiles(fmProfiles);
-	for(i=0;i<n_valid_profiles;++i){
+	GPtrArray *valid_profiles = retrieve_valid_profiles(fmProfiles);
+	for(i=0;i<valid_profiles->len;++i){
 		fmProfileEntry = g_ptr_array_index(valid_profiles, i);
 		printf("%s is a valid profile\n", fmProfileEntry->id);
 	}
+	printf("\n");
 
 	/* Validate actions */
-	valid_actions = retrieve_valid_actions(fmActions);
-	for(i=0;i<n_valid_actions;++i){
+	GPtrArray *valid_actions = retrieve_valid_actions(fmActions, valid_profiles);
+	for(i=0;i<valid_actions->len;++i){
 		fmActionEntry = g_ptr_array_index(valid_actions, i);
 		printf("%s is a valid action\n", fmActionEntry->name);
 	}
@@ -81,260 +119,65 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-GPtrArray* retrieve_valid_profiles(GHashTable *fmProfiles)
+/*
+void add_to_file_info_list(gpointer data, gpointer user_data)
 {
-	GPtrArray *profile_array = g_ptr_array_new();
-	g_hash_table_foreach(fmProfiles, (GHFunc) validate_profile, profile_array);
+	FmPath *path = (FmPath *)data;
+	FmFileInfoList *file_info_list = (FmFileInfoList *)user_data;
+	GFile *file = fm_path_to_gfile(path);
+	GFileInfo *info = g_file_query_info(file, "standard::*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	FmFileInfo *fi = fm_file_info_new();
+	fi->path = fm_path_new("");
+	fm_file_info_set_from_gfileinfo(fi, info);
 
-	return profile_array;
+	fm_list_push_tail(file_info_list, fi);
+}
+*/
+
+void print_file_info(gpointer data, gpointer user_data)
+{
+	FmFileInfo *file_info = (FmFileInfo *)data;
+	printf("%s\n", fm_file_info_get_disp_name(file_info));
+	printf("%s\n", fm_mime_type_get_type(fm_file_info_get_mime_type(file_info)));
 }
 
-GPtrArray* retrieve_valid_actions(GHashTable *fmActions)
+void add_to_mime_types(gpointer data, gpointer user_data)
 {
-	GPtrArray *action_array = g_ptr_array_new();
-	g_hash_table_foreach(fmActions, (GHFunc) validate_action, action_array);
+	FmFileInfo *file_info = (FmFileInfo *)data;
+	GPtrArray *mime_types = (GPtrArray *)user_data;
+	FmMimeType *mime_type = fm_file_info_get_mime_type(file_info);
+	if(mime_type == NULL)
+		return;
 
-	return action_array;
+	gchar *mime_type_string = (gchar *)fm_mime_type_get_type(mime_type);
+	gchar *mime_type_string_i = NULL;
+	guint i;
+	for(i = 0; i<mime_types->len; i++){
+		mime_type_string_i = (gchar *)g_ptr_array_index(mime_types, i);
+		if(g_strcmp0(mime_type_string, mime_type_string_i) == 0)
+			return;
+	}
+
+	g_ptr_array_add(mime_types, (gpointer) mime_type_string);
 }
 
-void validate_profile(gpointer key, gpointer value, gpointer profile_array)
+void add_to_base_names(gpointer data, gpointer user_data)
 {
-	gchar *id = g_strdup(key);
-	FmProfileEntry *profile = (FmProfileEntry *)value;
+	FmFileInfo *file_info = (FmFileInfo *)data;
+	GPtrArray *base_names = (GPtrArray *)user_data;
+	gchar *display_name = (gchar *)fm_file_info_get_disp_name(file_info);
+	gchar *base_name = g_strrstr(display_name, ".");
+	if(base_name == NULL)
+		return;
 
-	printf("Validating profile %s:\t", id);
-	FmConditions *conditions = profile->conditions;
-	if(validate_conditions(conditions) == TRUE){
-		printf("[OK]\n");
-		g_ptr_array_add(profile_array, (gpointer) profile);
-		n_valid_profiles++;
-	} else {
-		printf("[FAIL]\n");
+	guint i;
+	gchar *base_name_i;
+	for(i = 0; i<base_names->len; i++){
+		base_name_i = (gchar *)g_ptr_array_index(base_names, i);
+		if(g_strcmp0(base_name, base_name_i) == 0)
+			return;
 	}
+
+	g_ptr_array_add(base_names, (gpointer) base_name);
 }
 
-void validate_action(gpointer key, gpointer value, gpointer action_array)
-{
-	gchar *name = g_strdup(key);
-	FmActionEntry *action = (FmActionEntry *)value;
-	gsize i, j;
-
-	printf("Validating action %s:\t\n", name);
-	FmConditions *conditions = action->conditions;
-	if(validate_conditions(conditions) == TRUE){
-		/* Now validate action according to available profiles */
-		for(i=0;i<action->n_profiles;++i){
-			printf("Tyring to find profile %s in validated profiles\t", action->profiles[i]);
-			for(j=0;j<n_valid_profiles;++j){
-				if(g_strcmp0(g_strstrip(action->profiles[i]), g_strstrip(((FmProfileEntry *)g_ptr_array_index(valid_profiles, j))->id)) == 0){
-					printf("[OK]\n");
-					printf("%s is a valid action\n", name);
-					g_ptr_array_add(action_array, action);
-					return;
-				} else {
-					printf("[FAIL]\n");
-				}
-			}
-		}
-		printf("[FAIL]: No valid profile found\n");
-	} else {
-		printf("[FAIL]: Conditions not satisfied\n");
-	}
-}
-
-gboolean validate_conditions(FmConditions *conditions)
-{
-	/* Please note notation
-	 * conditions->fieldname is of type as defined as in parser.h
-	 * fieldname is a gboolean to be used in this function
-	 * field_name is a global variable in this file to be used as the "environment" setup for validating conditions
-	 * TODO: Find a better notation :)
-	 */
-
-	gsize i;
-	gboolean isValid = TRUE;
-	gboolean onlyshowin = TRUE, notshowin = TRUE;
-	gboolean tryexec = TRUE;
-	gboolean showifregistered = TRUE, showiftrue = TRUE, showifrunning = TRUE;
-	gboolean mimetypes = FALSE;
-	gboolean basenames = TRUE, matchcase = TRUE;
-	gboolean selectioncount = TRUE;
-	gboolean schemes = TRUE, folderlist = TRUE, capabilities = TRUE;
-
-	FILE *fp;
-	gchar line[255];
-	gchar *selection_count_string;
-	gsize selection_count_size;
-	//gchar *base_name_string;
-
-
-	/* OnlyShowIn/NotShowIn validation */
-	if(conditions->onlyshowin != NULL){
-		onlyshowin = FALSE;
-		for(i=0;i<conditions->n_onlyshowin;++i)
-			if(g_strcmp0(conditions->onlyshowin[i], environment) == 0) onlyshowin = TRUE;
-	} else if(conditions->notshowin != NULL) {
-		for(i=0;i<conditions->n_notshowin;++i)
-			if(g_strcmp0(conditions->notshowin[i], environment) == 0) notshowin = FALSE;
-	}
-
-	if(onlyshowin == FALSE || notshowin == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* TryExec validation */
-	if(conditions->tryexec != NULL){
-		if(!(g_file_test(conditions->tryexec, G_FILE_TEST_EXISTS) == TRUE && g_file_test(conditions->tryexec, G_FILE_TEST_IS_EXECUTABLE) == TRUE))
-			tryexec = FALSE;
-	}
-
-	if(tryexec == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* ShowIfRegistered validation */
-	/* TODO: How do I access D-Bus using Glib? */
-
-	if(showifregistered == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* ShowIfTrue validation */
-	/* TODO: Used popen, should that be fine? */
-	if(conditions->showiftrue != NULL){
-		showiftrue = FALSE;
-		fp = popen(conditions->showiftrue, "r");
-		memset(line, 255, 0);
-		while(fgets(line, 255, fp)){
-			if(g_strcmp0(g_strstrip(line), "true") == 0){
-				showiftrue = TRUE;
-				break;
-			}
-		}
-		pclose(fp);
-	}
-
-	if(showiftrue == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* ShowIfRunning validation */
-	/* We use popen() and pgrep here */
-	printf("Here 2");
-	if(conditions->showifrunning != NULL){
-		fp = popen(g_strconcat("pgrep ", conditions->showifrunning, NULL), "r");
-		memset(line, 255, 0);
-		fgets(line, 255, fp);
-		if(g_strcmp0(g_strstrip(line), "") == 0){
-			showifrunning = FALSE;
-		}
-	}
-	
-	if(showifrunning == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* Mimetypes validation */
-	if(conditions->n_mimetypes > 0){
-		for(i=0;i<conditions->n_mimetypes;++i)
-			if(g_strcmp0(conditions->mimetypes[i], mime_type) == 0)
-				mimetypes = TRUE;
-	} else {						/* No mimetypes specified, defaults to *, so valid */
-		mimetypes = TRUE;
-	}
-
-	if(mimetypes == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* The following two conditions, matchcase and basenames are to be validated together */
-	/* MatchCase evalutation*/
-	if(conditions->n_basenames > 0){
-		matchcase = conditions->matchcase;
-
-		/* Basenames validation */
-		/*
-		for(i=0;i<conditions->n_basenames;++i){
-			base_name_string = g_strstrip(conditions->basenames[i]);
-			for(j=0;j<n_base_names;++j){
-				if(matchcase == FALSE){
-					if(base_name_string[0] == '!' && g_ascii_strcasecmp(base_name_string+1, base_names[j]))
-				}
-			}
-		}
-		*/
-	}
-
-	if(basenames == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* Selection count validation */
-	if(conditions->selectioncount == NULL){
-		if(selection_count == 0)
-			selectioncount = FALSE;
-		else
-			selectioncount = TRUE;
-	} else {
-		/* Parse the selection count string */
-		selection_count_string = g_strstrip(g_strdup(conditions->selectioncount));
-		selection_count_size = atoi(selection_count_string + 1);
-		switch(selection_count_string[0]){
-			case '<':
-				if(!(selection_count < selection_count_size))
-					selectioncount = FALSE;
-				break;
-			case '=':
-				if(!(selection_count == selection_count_size))
-					selectioncount = FALSE;
-				break;
-			case '>':
-				if(!(selection_count > selection_count_size))
-					selectioncount = FALSE;
-				break;
-			default:
-				selectioncount = TRUE;
-		}
-	}
-
-	if(selectioncount == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* Schemes validation */
-	if(conditions->n_schemes != 0){
-	}
-
-	if(schemes == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* Folderlist validation */
-	if(conditions->n_folderlist != 0){
-	}
-
-	if(folderlist == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	/* Capabilities validation */
-	if(conditions->n_capabilities!= 0){
-	}
-
-	if(capabilities == FALSE){
-		isValid = FALSE;
-		return isValid;
-	}
-
-	return isValid;
-}

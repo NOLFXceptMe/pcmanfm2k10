@@ -47,7 +47,7 @@ FmDesktopEntry* parse(gchar* file_name)
 	fmDesktopEntry->fmMenuEntries = g_ptr_array_new();
 
 #ifndef NDEBUG
-	printf("Extracted file_id is %s\n", fmDesktopEntry->desktop_file_id);
+	//printf("Extracted file_id is %s\n", fmDesktopEntry->desktop_file_id);
 #endif
 	
 	group_names = g_key_file_get_groups(keyfile, &n_groups);
@@ -55,7 +55,7 @@ FmDesktopEntry* parse(gchar* file_name)
 	/* Store action entries, profile entries, and menu entries in respective data structures */
 	for(i=0;i<n_groups;++i){
 #ifndef NDEBUG
-		printf("Name of the group is %s\n", group_names[i]);
+		//printf("Name of the group is %s\n", group_names[i]);
 #endif
 
 		/* Action entry or Menu entry
@@ -117,6 +117,7 @@ FmDesktopEntry* parse(gchar* file_name)
 		}
 		
 #ifndef NDEBUG
+		/*
 		switch(type){
 			case ACTION_ENTRY:
 				printf("Action Entry\n");
@@ -133,6 +134,7 @@ FmDesktopEntry* parse(gchar* file_name)
 			default:
 				break;
 		};
+		*/
 #endif
 	}
 
