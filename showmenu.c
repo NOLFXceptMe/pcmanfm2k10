@@ -22,6 +22,7 @@
 
 void print_file_info(gpointer, gpointer);
 //void add_to_file_info_list(gpointer data, gpointer user_data);
+void print_base_names(gpointer data, gpointer user_data);
 
 void add_to_mime_types(gpointer data, gpointer user_data);
 void add_to_base_names(gpointer data, gpointer user_data);
@@ -68,12 +69,19 @@ int main(int argc, char *argv[])
 	/* Make entries into the path_list, manually */
 	//path_list = fm_path_list_new_from_uris((const char **)uris);
 	FmPathList *path_list = fm_path_list_new();
-	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
-	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.h"));
-	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
-	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
+	/*
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.h"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
+	*/
+	/*
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
+	*/
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Einstein_german.ogg"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Roggan.mp3"));
 	
 	/* Make a list of file infos from the path_list */
 	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
@@ -97,6 +105,7 @@ int main(int argc, char *argv[])
 	fm_list_foreach(file_info_list, add_to_mime_types, mime_types);
 	//fm_list_foreach(file_info_list, print_file_info, NULL);
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
+	//g_ptr_array_foreach(base_names, print_base_names, NULL);
 	/* Pre-processing done */
 
 	/* Validate profiles */
@@ -144,6 +153,12 @@ void print_file_info(gpointer data, gpointer user_data)
 	printf("%s\n", fm_mime_type_get_type(fm_file_info_get_mime_type(file_info)));
 }
 
+void print_base_names(gpointer data, gpointer user_data)
+{
+	gchar *basename = (gchar *)data;
+	printf("%s\n", basename);
+}
+
 void add_to_mime_types(gpointer data, gpointer user_data)
 {
 	FmFileInfo *file_info = (FmFileInfo *)data;
@@ -169,9 +184,10 @@ void add_to_base_names(gpointer data, gpointer user_data)
 	FmFileInfo *file_info = (FmFileInfo *)data;
 	GPtrArray *base_names = (GPtrArray *)user_data;
 	gchar *display_name = (gchar *)fm_file_info_get_disp_name(file_info);
-	gchar *base_name = g_strrstr(display_name, ".");
-	if(base_name == NULL)
+	gchar *base_name_temp = g_strrstr(display_name, ".");
+	if(base_name_temp == NULL)
 		return;
+	gchar *base_name = g_strconcat("*", base_name_temp, NULL);
 
 	guint i;
 	gchar *base_name_i;
@@ -181,6 +197,7 @@ void add_to_base_names(gpointer data, gpointer user_data)
 			return;
 	}
 
+	//printf("Adding %s to base_names\n", base_name);
 	g_ptr_array_add(base_names, (gpointer) base_name);
 }
 

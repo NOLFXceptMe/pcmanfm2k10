@@ -23,9 +23,9 @@ DONE: TryExec
 TODO: ShowIfRegistered
 DONE: ShowIfTrue
 DONE: ShowIfRunning
-TODO: MimeTypes
-TODO: Basenames
-TODO: Matchcase
+DONE: MimeTypes (except for negating)
+DONE: Basenames (except for negating)
+DONE: Matchcase
 DONE: SelectionCount
 TODO: Schemes
 TODO: Folders

@@ -197,12 +197,12 @@ gboolean validate_conditions(FmConditions *conditions)
 	gboolean atleast_one_match = TRUE;
 	gchar **mime_split_i = NULL, **mime_split_j = NULL;
 	gchar *content_type = NULL;
-	gboolean negate_matching = FALSE;
+	gboolean negate_matching_mimetypes = FALSE;
 
 	if(conditions->n_mimetypes > 0){
 		for(i=0; i<conditions->n_mimetypes; ++i){									/* Iterate on the mimetypes supported, check if it matches any of the selection */
 			if(conditions->mimetypes[i][0] == '!')
-				negate_matching = FALSE;
+				negate_matching_mimetypes = FALSE;
 			mime_split_i = g_strsplit(conditions->mimetypes[i], "/", 2);
 			//printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);				/* mime_split_i[0] is the content type, mime_split_i[1] is the subtype */
 
@@ -268,7 +268,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	if(atleast_one_match == FALSE)
 		mimetypes = FALSE;
 
-	/* Superflous code, but more clarity */
+	/* Not extra code */
 	if(mimetypes == FALSE){
 		isValid = FALSE;
 		printf("Failed MimeTypes validation\n");
@@ -276,22 +276,37 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* The following two conditions, matchcase and basenames are to be validated together */
-	/* MatchCase evalutation*/
+	/* TODO: Correct the difference in the format in which they are stored. Those read off the .desktop file have a *.c, *.h extension, for example. The ones in our GPtrArray are .c, .h etc */
+	/* MatchCase and Basenames evalutation*/
+	gboolean negate_matching_basenames = FALSE;
+
 	if(conditions->n_basenames > 0){
 		matchcase = conditions->matchcase;
 
 		/* Basenames validation */
-		/*
+		atleast_one_match = FALSE;
 		for(i=0;i<conditions->n_basenames;++i){
-			base_name_string = g_strstrip(conditions->basenames[i]);
-			for(j=0;j<n_base_names;++j){
-				if(matchcase == FALSE){
-					if(base_name_string[0] == '!' && g_ascii_strcasecmp(base_name_string+1, base_names[j]))
+			printf("validating basename \"%s\"\n", conditions->basenames[i]);
+			if(conditions->basenames[i][0] == '!')
+				negate_matching_basenames = TRUE;
+
+			if(g_strcmp0(conditions->basenames[i], "*") == 0)
+				break;
+
+			/* Iterate over the basenames of the selected items and validate */
+			for(j=0;j<base_names->len;++j){
+				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+				if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
+					atleast_one_match = TRUE;
+					break;
 				}
 			}
+			if(atleast_one_match == TRUE)
+				break;
 		}
-		*/
 	}
+	if(atleast_one_match == FALSE)
+		basenames = FALSE;
 
 	if(basenames == FALSE){
 		isValid = FALSE;
