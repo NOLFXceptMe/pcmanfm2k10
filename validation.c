@@ -74,17 +74,16 @@ void validate_action(gpointer key, gpointer value, gpointer user_data)
 	if(action_validity == TRUE){
 		/* Now validate action according to available profiles */
 		for(i=0;i<action->n_profiles;++i){
-			printf("Tyring to find profile %s in validated profiles\t", action->profiles[i]);
+			printf("Trying to find profile %s in validated profiles\t", action->profiles[i]);
 			for(j=0;j<valid_profiles_array->len;++j){
 				if(g_strcmp0(g_strstrip(action->profiles[i]), g_strstrip(((FmProfileEntry *)g_ptr_array_index(valid_profiles_array, j))->id)) == 0){
-					printf("[OK]\n");
+					printf("1: [OK]\n");
 					//printf("%s is a valid action\n", name);
 					g_ptr_array_add(valid_actions_array, action);
 					return;
-				} else {
-					printf("[FAIL]\n");
 				}
 			}
+			printf("1: [FAIL]\n");
 		}
 		printf("[FAIL]: No valid profile found\n");
 	} else {
@@ -102,7 +101,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	 * TODO: Find a better notation :)
 	 */
 
-	gsize i;
+	gsize i, j;
 	gboolean isValid = TRUE;
 	gboolean onlyshowin = TRUE, notshowin = TRUE;
 	gboolean tryexec = TRUE;
@@ -193,7 +192,57 @@ gboolean validate_conditions(FmConditions *conditions)
 		return isValid;
 	}
 
+	gboolean atleast_one_match = TRUE;
+	gchar **mime_split_i = NULL, **mime_split_j = NULL;
 	/* Mimetypes validation */
+	if(conditions->n_mimetypes > 0){
+		atleast_one_match = FALSE;
+		for(i=0; i<conditions->n_mimetypes; ++i){
+			mime_split_i = g_strsplit(conditions->mimetypes[i], "/", 2);
+			printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);
+			if(g_strcmp0(conditions->mimetypes[i], "*") == 0)
+				break;
+			if(g_strcmp0(mime_split_i[0], "all") == 0){
+				if(g_strcmp0(mime_split_i[1], "*") == 0 || g_strcmp0(mime_split_i[1], "all") == 0){
+					break;
+				}
+				if(g_strcmp0(mime_split_i[1], "allfiles") == 0){
+					printf("Need test for all/allfiles\n");
+					break;
+				}
+			}
+			if(g_strcmp0(mime_split_i[0], "inode") == 0 && g_strcmp0(mime_split_i[1], "directory") == 0){
+				printf("Need test for inode/directory\n");
+				break;
+			}
+			/* mime_split_i[0] is the mime group, and mime_split_i[1] is the mime specific type */
+			for(j=0; j<mime_types->len; ++j){
+				mime_split_j = g_strsplit(g_ptr_array_index(mime_types, j), "/", 2);
+
+				printf("Matching %s with %s\t", mime_split_i[0], mime_split_j[0]);
+				if(g_strcmp0(mime_split_i[0], mime_split_j[0]) == 0){
+					printf("SUCCESS\n");
+					printf("Matching %s with %s\t", mime_split_i[1], mime_split_j[1]);
+					if(g_strcmp0(mime_split_i[1], mime_split_j[1]) == 0 || g_strcmp0(mime_split_i[1], "*") == 0 || g_strcmp0(mime_split_i[1], "all") == 0){
+						printf("SUCCESS\n");
+						/* Matched */
+						atleast_one_match = TRUE;
+						break;
+					} else {
+						printf("FAIL\n");
+					}
+				} else {
+					printf("FAIL\n");
+				}
+			}
+			if(atleast_one_match == TRUE)
+				break;
+		}
+	}
+	if(atleast_one_match == FALSE)
+		mimetypes = FALSE;
+
+	/* Superflous code, but more clarity */
 	if(mimetypes == FALSE){
 		isValid = FALSE;
 		printf("Failed MimeTypes validation\n");

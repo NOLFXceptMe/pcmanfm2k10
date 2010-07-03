@@ -7,6 +7,7 @@ Profiles = on_folder; on_file; on_desktop;
 [X-Action-Profile on_folder]
 Name = open a terminal on the current folder or on the selected folder
 MimeTypes = inode/directory;
+#MimeTypes = text/all;
 # note that this means strictly less than 2, as the equal sign is part of the DES syntax
 SelectionCount = < 2
 Exec = gnome-terminal --working-directory=%d
