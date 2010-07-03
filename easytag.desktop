@@ -11,5 +11,6 @@ Profiles=profile-pre-v2;
 Exec=easytag %d
 Basenames=*.MP3;*.flac;*.ogg;*.aac;
 Matchcase=true
+Capabilities=Owner;Executable;
 Schemes=file;
 Name[en_US.UTF-8]=Profile automatically created from pre-v2 action

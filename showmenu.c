@@ -26,11 +26,11 @@ void print_base_names(gpointer data, gpointer user_data);
 
 void add_to_mime_types(gpointer data, gpointer user_data);
 void add_to_base_names(gpointer data, gpointer user_data);
+void add_to_capabilities(gpointer data, gpointer user_data);
 
 gchar *environment = "LXDE";
-gsize selection_count;
-GPtrArray *mime_types = NULL, *base_names = NULL;
-//GPtrArray *valid_profiles = NULL, *valid_actions = NULL;
+gsize selection_count = 0;
+GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
 	fmActions = g_hash_table_new(NULL, NULL);
 	mime_types = g_ptr_array_new();
 	base_names = g_ptr_array_new();
+	capabilities_array = g_ptr_array_new();
 
 	for(i=0;i<desktop_entry->n_profile_entries;++i){
 		fmProfileEntry = g_ptr_array_index(fmProfileEntries, i);
@@ -75,6 +76,8 @@ int main(int argc, char *argv[])
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
 	*/
+	/*
+	 * "examples" is a directory, and "home" is a link, both of them have the mime type inode/directory */
 	/*
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
@@ -105,6 +108,7 @@ int main(int argc, char *argv[])
 	fm_list_foreach(file_info_list, add_to_mime_types, mime_types);
 	//fm_list_foreach(file_info_list, print_file_info, NULL);
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
+	fm_list_foreach(file_info_list, add_to_capabilities, capabilities_array);
 	//g_ptr_array_foreach(base_names, print_base_names, NULL);
 	/* Pre-processing done */
 
@@ -199,5 +203,21 @@ void add_to_base_names(gpointer data, gpointer user_data)
 
 	//printf("Adding %s to base_names\n", base_name);
 	g_ptr_array_add(base_names, (gpointer) base_name);
+}
+
+void add_to_capabilities(gpointer data, gpointer user_data)
+{
+	FmFileInfo *file_info = (FmFileInfo *)data;
+	GPtrArray *capabilities = (GPtrArray *)user_data;
+	FmCapabilities *fm_capability = (FmCapabilities *)g_new0(FmCapabilities, 1);
+	mode_t mode = file_info->mode;
+	
+	fm_capability->isOwner = (file_info->uid == getuid())?TRUE:FALSE;
+	fm_capability->isReadable = (S_IRUSR & mode)?TRUE:FALSE;
+	fm_capability->isWritable = (S_IWUSR & mode)?TRUE:FALSE;
+	fm_capability->isExecutable = (S_IXUSR & mode)?TRUE:FALSE;
+	fm_capability->isLocal = S_ISLNK(mode)?FALSE:TRUE;
+
+	g_ptr_array_add(capabilities, (gpointer) fm_capability);
 }
 
