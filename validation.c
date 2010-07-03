@@ -375,19 +375,26 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* Capabilities validation */
 	FmCapabilities *fm_capability = NULL;
+	gboolean negate_capability;
 	//printf("\nHave %d capabilities to verify\n", conditions->n_capabilities);
 	if(conditions->n_capabilities> 0){
 		for(i=0; i<conditions->n_capabilities; ++i){			/* Iterate on capabilities */
 			//printf("Capability %d: %s\n", i, conditions->capabilities[i]);
 			if(capabilities == FALSE)
 				break;
+			negate_capability = FALSE;
+			if(conditions->capabilities[i][0] == '!'){
+				negate_capability = TRUE;
+				conditions->capabilities[i] = conditions->capabilities[i]+1;
+				/* Memory leak of 1 byte here? */
+			}
 
 			/* Owner */
 			if(g_strcmp0(conditions->capabilities[i], "Owner") == 0){
-				printf("Verifying if current user is owner of all files selected\n");
 				for(j=0; j<capabilities_array->len; ++j){
 					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(fm_capability->isOwner != TRUE){
+					/* Using the XOR here */
+					if(!((fm_capability->isOwner == TRUE) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -398,7 +405,7 @@ gboolean validate_conditions(FmConditions *conditions)
 			if(g_strcmp0(conditions->capabilities[i], "Readable") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
 					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(fm_capability->isReadable != TRUE){
+					if(!((fm_capability->isReadable == TRUE) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -409,7 +416,7 @@ gboolean validate_conditions(FmConditions *conditions)
 			if(g_strcmp0(conditions->capabilities[i], "Writable") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
 					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(fm_capability->isWritable != TRUE){
+					if(!((fm_capability->isWritable == TRUE) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -418,10 +425,9 @@ gboolean validate_conditions(FmConditions *conditions)
 			}
 
 			if(g_strcmp0(conditions->capabilities[i], "Executable") == 0){
-				printf("Checking if every file selected is executable\n");
 				for(j=0; j<capabilities_array->len; ++j){
 					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(fm_capability->isExecutable != TRUE){
+					if(!((fm_capability->isExecutable == TRUE) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -432,7 +438,7 @@ gboolean validate_conditions(FmConditions *conditions)
 			if(g_strcmp0(conditions->capabilities[i], "Local") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
 					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(fm_capability->isLocal != TRUE){
+					if(!(fm_capability->isLocal == TRUE) ^ (negate_capability == TRUE)){
 						capabilities = FALSE;
 						break;
 					}
