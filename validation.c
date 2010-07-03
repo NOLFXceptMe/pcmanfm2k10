@@ -192,30 +192,56 @@ gboolean validate_conditions(FmConditions *conditions)
 		return isValid;
 	}
 
+	/* Mimetypes validation */
+
 	gboolean atleast_one_match = TRUE;
 	gchar **mime_split_i = NULL, **mime_split_j = NULL;
-	/* Mimetypes validation */
+	gchar *content_type = NULL;
+	gboolean negate_matching = FALSE;
+
 	if(conditions->n_mimetypes > 0){
-		atleast_one_match = FALSE;
-		for(i=0; i<conditions->n_mimetypes; ++i){
+		for(i=0; i<conditions->n_mimetypes; ++i){									/* Iterate on the mimetypes supported, check if it matches any of the selection */
+			if(conditions->mimetypes[i][0] == '!')
+				negate_matching = FALSE;
 			mime_split_i = g_strsplit(conditions->mimetypes[i], "/", 2);
-			printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);
-			if(g_strcmp0(conditions->mimetypes[i], "*") == 0)
+			//printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);				/* mime_split_i[0] is the content type, mime_split_i[1] is the subtype */
+
+			if(g_strcmp0(conditions->mimetypes[i], "*") == 0)						/* * matches everything, no further checks */
 				break;
-			if(g_strcmp0(mime_split_i[0], "all") == 0){
-				if(g_strcmp0(mime_split_i[1], "*") == 0 || g_strcmp0(mime_split_i[1], "all") == 0){
+
+			if(g_strcmp0(mime_split_i[0], "all") == 0){								/* all/? */
+				if(g_strcmp0(mime_split_i[1], "*") == 0 || g_strcmp0(mime_split_i[1], "all") == 0){			/* all/ * and all/all is the same as * */
 					break;
 				}
-				if(g_strcmp0(mime_split_i[1], "allfiles") == 0){
-					printf("Need test for all/allfiles\n");
+
+				if(g_strcmp0(mime_split_i[1], "allfiles") == 0){					/* all/allfiles */
+					/* Use the fact that all files start with anything other than inode
+					 * Refer fm-mime-type.c fm_mime_type_get_for_native_file */
+
+					for(j=0; j<mime_types->len; ++j){								/* Iterate on the mimetypes of selected files and check if there is any match */
+						content_type = g_strndup(g_ptr_array_index(mime_types, j), 5);			/* Extract the first 5 chars of the mimetype, strlen("inode") = 5 :-) */
+						//printf("%s\n", content_type);
+						if(g_strcmp0(content_type, "inode") == 0){								/* If any non file type is found, check fails */
+							mimetypes = FALSE;
+							break;
+						}
+						g_free(content_type);
+					}
 					break;
 				}
 			}
-			if(g_strcmp0(mime_split_i[0], "inode") == 0 && g_strcmp0(mime_split_i[1], "directory") == 0){
-				printf("Need test for inode/directory\n");
+
+			if(g_strcmp0(mime_split_i[0], "inode") == 0){										/* inode/? */
+				for(j=0;j<mime_types->len;++j){													/* every mimetype of selection must match */
+					(g_strcmp0(conditions->mimetypes[i], g_ptr_array_index(mime_types, j)) != 0)?mimetypes = FALSE:0;
+					break;
+				}
 				break;
 			}
+
+			/* everything else */
 			/* mime_split_i[0] is the mime group, and mime_split_i[1] is the mime specific type */
+			atleast_one_match = FALSE;
 			for(j=0; j<mime_types->len; ++j){
 				mime_split_j = g_strsplit(g_ptr_array_index(mime_types, j), "/", 2);
 

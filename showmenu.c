@@ -68,10 +68,12 @@ int main(int argc, char *argv[])
 	/* Make entries into the path_list, manually */
 	//path_list = fm_path_list_new_from_uris((const char **)uris);
 	FmPathList *path_list = fm_path_list_new();
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.h"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.h"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
 	
 	/* Make a list of file infos from the path_list */
 	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
@@ -93,6 +95,7 @@ int main(int argc, char *argv[])
 	/* Now evaluate other data depending on the files_selected */
 	selection_count = fm_list_get_length(file_info_list);
 	fm_list_foreach(file_info_list, add_to_mime_types, mime_types);
+	//fm_list_foreach(file_info_list, print_file_info, NULL);
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
 	/* Pre-processing done */
 
