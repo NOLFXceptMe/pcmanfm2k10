@@ -237,10 +237,13 @@ FmConditions* parse_conditions(GKeyFile *keyfile, gchar *group_name)
 	conditions->showifrunning = g_key_file_get_string(keyfile, group_name, "ShowIfRunning", NULL);
 	conditions->mimetypes = g_key_file_get_string_list(keyfile, group_name, "MimeTypes", &conditions->n_mimetypes, NULL);
 	conditions->basenames = g_key_file_get_string_list(keyfile, group_name, "Basenames", &conditions->n_basenames, NULL);
-	conditions->matchcase = g_key_file_get_boolean(keyfile, group_name, "MatchCase", &error);
-	if(error->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND|| error->code == G_KEY_FILE_ERROR_INVALID_VALUE){
-		conditions->matchcase = TRUE;
-		error = NULL;
+	conditions->matchcase = g_key_file_get_boolean(keyfile, group_name, "Matchcase", &error);
+	if(error){
+		if(error->code == G_KEY_FILE_ERROR_KEY_NOT_FOUND|| error->code == G_KEY_FILE_ERROR_INVALID_VALUE){
+			conditions->matchcase = TRUE;
+			g_error_free(error);
+			error = NULL;
+		}
 	}
 
 	conditions->selectioncount = g_key_file_get_string(keyfile, group_name, "SelectionCount", NULL);

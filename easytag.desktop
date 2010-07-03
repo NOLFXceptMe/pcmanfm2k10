@@ -9,6 +9,7 @@ Profiles=profile-pre-v2;
 
 [X-Action-Profile profile-pre-v2]
 Exec=easytag %d
-Basenames=*.mp3;*.flac;*.ogg;*.aac;
+Basenames=*.MP3;*.flac;*.ogg;*.aac;
+Matchcase=true
 Schemes=file;
 Name[en_US.UTF-8]=Profile automatically created from pre-v2 action

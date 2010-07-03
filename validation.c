@@ -276,8 +276,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* The following two conditions, matchcase and basenames are to be validated together */
-	/* TODO: Correct the difference in the format in which they are stored. Those read off the .desktop file have a *.c, *.h extension, for example. The ones in our GPtrArray are .c, .h etc */
-	/* MatchCase and Basenames evalutation*/
+	/* Matchcase and Basenames evalutation*/
 	gboolean negate_matching_basenames = FALSE;
 
 	if(conditions->n_basenames > 0){
@@ -296,9 +295,16 @@ gboolean validate_conditions(FmConditions *conditions)
 			/* Iterate over the basenames of the selected items and validate */
 			for(j=0;j<base_names->len;++j){
 				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
-				if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
-					atleast_one_match = TRUE;
-					break;
+				if(matchcase == TRUE){
+					if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
+						atleast_one_match = TRUE;
+						break;
+					}
+				} else {
+					if(g_ascii_strcasecmp(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
+						atleast_one_match = TRUE;
+						break;
+					}
 				}
 			}
 			if(atleast_one_match == TRUE)
