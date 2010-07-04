@@ -27,6 +27,7 @@ DONE: MimeTypes (except for negating)
 DONE: Basenames (except for negating)
 DONE: Matchcase
 DONE: SelectionCount
-TODO: Schemes
+DONE: Schemes	(except for negating)
 TODO: Folders
-TODO: Capabilities
+DONE: Capabilities
+(*)TODO: Parameter substitution at runtime [hard?]

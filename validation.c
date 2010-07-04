@@ -8,7 +8,7 @@
 
 extern gchar *environment;
 extern gsize selection_count;
-extern GPtrArray *mime_types, *base_names, *capabilities_array;
+extern GPtrArray *mime_types, *base_names, *capabilities_array, *schemes_array;
 typedef struct _valid_arrays_type valid_arrays_type;
 struct _valid_arrays_type {
 	GPtrArray *profile_array;
@@ -284,7 +284,7 @@ gboolean validate_conditions(FmConditions *conditions)
 		/* Basenames validation */
 		atleast_one_match = FALSE;
 		for(i=0;i<conditions->n_basenames;++i){
-			printf("validating basename \"%s\"\n", conditions->basenames[i]);
+			//printf("validating basename \"%s\"\n", conditions->basenames[i]);
 			if(conditions->basenames[i][0] == '!')
 				negate_matching_basenames = TRUE;
 
@@ -293,7 +293,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			/* Iterate over the basenames of the selected items and validate */
 			for(j=0;j<base_names->len;++j){
-				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+				//printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
 				if(matchcase == TRUE){
 					if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
 						atleast_one_match = TRUE;
@@ -354,7 +354,33 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* Schemes validation */
+	gboolean negate_scheme;
 	if(conditions->n_schemes > 0){
+		atleast_one_match = FALSE;
+		for(i=0; i<conditions->n_schemes; ++i){			/* Iterate on schemes */
+			negate_scheme = FALSE;
+			if(conditions->schemes[i][0] == '!'){
+				negate_scheme = TRUE;
+				conditions->schemes[i] = conditions->schemes[i] + 1;
+				/* Mem leak, 1 byte? */
+			}
+			//printf("Validating scheme %s\n", conditions->schemes[i]);
+			
+			/* Now iterate on the schemes selected */
+			for(j=0; j<schemes_array->len; ++j){
+				//printf("Matching %s with %s\n", conditions->schemes[i], (char *)g_ptr_array_index(schemes_array, j));
+				if(g_strcmp0(conditions->schemes[i], g_ptr_array_index(schemes_array, j)) == 0){
+					atleast_one_match = TRUE;
+					break;
+				}
+			}
+			if(atleast_one_match == TRUE)
+				break;
+		}
+
+		/* Done matching all pairs */
+		if(atleast_one_match == FALSE)
+			schemes = FALSE;
 	}
 
 	if(schemes == FALSE){

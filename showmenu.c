@@ -27,10 +27,11 @@ void print_base_names(gpointer data, gpointer user_data);
 void add_to_mime_types(gpointer data, gpointer user_data);
 void add_to_base_names(gpointer data, gpointer user_data);
 void add_to_capabilities(gpointer data, gpointer user_data);
+void add_to_schemes(gpointer data, gpointer user_data);
 
 gchar *environment = "LXDE";
 gsize selection_count = 0;
-GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL;
+GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL, *schemes_array = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
 	mime_types = g_ptr_array_new();
 	base_names = g_ptr_array_new();
 	capabilities_array = g_ptr_array_new();
+	schemes_array = g_ptr_array_new();
 
 	for(i=0;i<desktop_entry->n_profile_entries;++i){
 		fmProfileEntry = g_ptr_array_index(fmProfileEntries, i);
@@ -85,6 +87,7 @@ int main(int argc, char *argv[])
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Einstein_german.ogg"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Roggan.mp3"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/action"));
 	
 	/* Make a list of file infos from the path_list */
 	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
@@ -110,6 +113,7 @@ int main(int argc, char *argv[])
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
 	fm_list_foreach(file_info_list, add_to_capabilities, capabilities_array);
 	//g_ptr_array_foreach(base_names, print_base_names, NULL);
+	fm_list_foreach(file_info_list, add_to_schemes, schemes_array);
 	/* Pre-processing done */
 
 	/* Validate profiles */
@@ -221,3 +225,27 @@ void add_to_capabilities(gpointer data, gpointer user_data)
 	g_ptr_array_add(capabilities, (gpointer) fm_capability);
 }
 
+void add_to_schemes(gpointer data, gpointer user_data)
+{
+	FmFileInfo *fi = (FmFileInfo *)data;
+	GPtrArray *schemes_array = (GPtrArray *)user_data;
+	gchar *uri = fm_path_to_uri(fm_file_info_get_path(fi));
+	gsize i;
+
+	/* Now parse the scheme */
+	/* Using string.h functions. GLib doesn't have strcspn()? :O */
+	size_t colon_pos = strcspn(uri, ":");
+	gchar *scheme = g_strndup(uri, colon_pos), *scheme_i = NULL;
+
+	for(i=0; i<schemes_array->len; ++i){
+		scheme_i = (gchar *)g_ptr_array_index(schemes_array, i);
+		if(g_strcmp0(scheme, scheme_i) == 0){
+			g_free(scheme);
+			g_free(uri);
+			return;
+		}
+	}
+
+	g_ptr_array_add(schemes_array, (gpointer) scheme);
+	g_free(uri);
+}
