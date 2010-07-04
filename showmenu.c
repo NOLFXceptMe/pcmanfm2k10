@@ -109,10 +109,8 @@ int main(int argc, char *argv[])
 	/* Now evaluate other data depending on the files_selected */
 	selection_count = fm_list_get_length(file_info_list);
 	fm_list_foreach(file_info_list, add_to_mime_types, mime_types);
-	//fm_list_foreach(file_info_list, print_file_info, NULL);
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
 	fm_list_foreach(file_info_list, add_to_capabilities, capabilities_array);
-	//g_ptr_array_foreach(base_names, print_base_names, NULL);
 	fm_list_foreach(file_info_list, add_to_schemes, schemes_array);
 	/* Pre-processing done */
 
@@ -220,7 +218,9 @@ void add_to_capabilities(gpointer data, gpointer user_data)
 	fm_capability->isReadable = (S_IRUSR & mode)?TRUE:FALSE;
 	fm_capability->isWritable = (S_IWUSR & mode)?TRUE:FALSE;
 	fm_capability->isExecutable = (S_IXUSR & mode)?TRUE:FALSE;
-	fm_capability->isLocal = S_ISLNK(mode)?FALSE:TRUE;
+
+	gchar *scheme_restricted = g_strndup(fm_path_to_uri(fm_file_info_get_path(file_info)), 4);
+	fm_capability->isLocal = (g_strcmp0(scheme_restricted, "file") == 0)?TRUE:FALSE;
 
 	g_ptr_array_add(capabilities, (gpointer) fm_capability);
 }

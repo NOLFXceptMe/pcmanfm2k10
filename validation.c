@@ -356,9 +356,10 @@ gboolean validate_conditions(FmConditions *conditions)
 	/* Schemes validation */
 	gboolean negate_scheme;
 	if(conditions->n_schemes > 0){
-		atleast_one_match = FALSE;
 		for(i=0; i<conditions->n_schemes; ++i){			/* Iterate on schemes */
+			atleast_one_match = FALSE;
 			negate_scheme = FALSE;
+
 			if(conditions->schemes[i][0] == '!'){
 				negate_scheme = TRUE;
 				conditions->schemes[i] = conditions->schemes[i] + 1;
@@ -369,12 +370,16 @@ gboolean validate_conditions(FmConditions *conditions)
 			/* Now iterate on the schemes selected */
 			for(j=0; j<schemes_array->len; ++j){
 				//printf("Matching %s with %s\n", conditions->schemes[i], (char *)g_ptr_array_index(schemes_array, j));
-				if(g_strcmp0(conditions->schemes[i], g_ptr_array_index(schemes_array, j)) == 0){
+				if(negate_scheme == FALSE && g_strcmp0(conditions->schemes[i], g_ptr_array_index(schemes_array, j)) == 0){
 					atleast_one_match = TRUE;
 					break;
 				}
+
+				if(negate_scheme == TRUE && g_strcmp0(conditions->schemes[i], g_ptr_array_index(schemes_array, j)) == 0){
+					break;
+				}
 			}
-			if(atleast_one_match == TRUE)
+			if((negate_scheme == FALSE && atleast_one_match == TRUE) || (negate_scheme == TRUE && atleast_one_match == FALSE))
 				break;
 		}
 
