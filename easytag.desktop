@@ -14,5 +14,5 @@ Exec=easytag %d
 #Matchcase=true;
 #Capabilities=Owner;!Executable;
 #Schemes=!file;http;
-Folders=/*/npower/*;
+Folders=/home/*; !/home/*/Code;
 Name[en_US.UTF-8]=Profile automatically created from pre-v2 action

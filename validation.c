@@ -477,7 +477,7 @@ gboolean validate_conditions(FmConditions *conditions)
 		for(i=0; i<conditions->n_folderlist; ++i){				/* First Pass: Iterate over the folder list, to find if our current directory lies in any of them */
 			if(g_strstrip(conditions->folderlist[i])[0] == '!')
 				continue;
-			printf("Validating wrt folder %d: %s\n", i, conditions->folderlist[i]);
+			printf("Validating wrt folder : %s\n", conditions->folderlist[i]);
 
 			folderlist = match_folder_pair(conditions->folderlist[i], current_directory);
 			
@@ -485,13 +485,19 @@ gboolean validate_conditions(FmConditions *conditions)
 				break;
 		}
 
-		//if(folderlist == TRUE){
-		//	for(i=0; i<conditions->n_folderlist; ++i){				/* Second Pass: Iterate over the folder list, to find if our current directory should not lie in any of them */
-		//		if(g_strstrip(conditions->folderlist[i])[0] != '!')
-		//			continue;
+		if(folderlist == TRUE){
+			for(i=0; i<conditions->n_folderlist; ++i){				/* Second Pass: Iterate over the folder list, to find if our current directory should not lie in any of them */
+				if(g_strstrip(conditions->folderlist[i])[0] != '!')
+					continue;
+				conditions->folderlist[i] = conditions->folderlist[i] + 1;
+				printf("Validating negation wrt folder : %s\n", conditions->folderlist[i]);
 
-		//	}
-		//}
+				folderlist = (match_folder_pair(conditions->folderlist[i], current_directory) == TRUE)?FALSE:TRUE;
+
+				if(folderlist == FALSE)
+					break;
+			}
+		}
 	}
 
 	if(folderlist == FALSE){
