@@ -2,13 +2,15 @@
 #include<glib/gstdio.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<unistd.h>
+
 
 #include "parser.h"
 #include "validation.h"
 
 extern gchar *environment;
 extern gsize selection_count;
-extern GPtrArray *mime_types, *base_names, *capabilities_array, *schemes_array;
+extern GPtrArray *mime_types, *base_names, *capabilities_array, *schemes_array, *folder_array;
 typedef struct _valid_arrays_type valid_arrays_type;
 struct _valid_arrays_type {
 	GPtrArray *profile_array;
@@ -468,7 +470,60 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* Folderlist validation */
-	if(conditions->n_folderlist > 0){
+	gchar current_directory[1024];
+	gchar **folder_split_i = NULL, **cwd_split = NULL;
+	gsize level_i, level_j;
+
+	if(conditions->n_folderlist >= 0){
+		getcwd(current_directory, 1024);
+		cwd_split = g_strsplit(current_directory, "/", 0);
+
+		for(i=0; i<conditions->n_folderlist; ++i){				/* First Pass: Iterate over the folder list, to find if our current directory lies in any of them */
+			if(g_strstrip(conditions->folderlist[i])[0] == '!')
+				continue;
+			printf("Validating wrt folder %d: %s\n", i, conditions->folderlist[i]);
+
+			folder_split_i = g_strsplit(conditions->folderlist[i], "/", 0);
+			level_i = level_j = 0;
+
+			while(folder_split_i[level_i] != NULL){
+				if(g_strcmp0(folder_split_i[level_i], "*") == 0){
+					while(g_strcmp0(folder_split_i[level_i], "*") == 0)			/* For the case when we write /path/to/ * / * / * */
+						level_i++;
+
+					if(folder_split_i[level_i] == NULL){
+						break;
+					}
+
+					while(cwd_split[level_j] != NULL){
+						if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
+							level_j++;
+						} else {
+							break;
+						}
+					}
+					if(cwd_split[level_j] == NULL){
+						folderlist = FALSE;
+						break;
+					}
+				}
+
+				if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
+					folderlist = FALSE;
+					break;
+				}
+
+				++level_i, ++level_j;
+			}
+		}
+
+		//if(folderlist == TRUE){
+		//	for(i=0; i<conditions->n_folderlist; ++i){				/* Second Pass: Iterate over the folder list, to find if our current directory should not lie in any of them */
+		//		if(g_strstrip(conditions->folderlist[i])[0] != '!')
+		//			continue;
+
+		//	}
+		//}
 	}
 
 	if(folderlist == FALSE){

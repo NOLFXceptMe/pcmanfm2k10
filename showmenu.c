@@ -28,10 +28,11 @@ void add_to_mime_types(gpointer data, gpointer user_data);
 void add_to_base_names(gpointer data, gpointer user_data);
 void add_to_capabilities(gpointer data, gpointer user_data);
 void add_to_schemes(gpointer data, gpointer user_data);
+void add_to_folders(gpointer data, gpointer user_data);
 
 gchar *environment = "LXDE";
 gsize selection_count = 0;
-GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL, *schemes_array = NULL;
+GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL, *schemes_array = NULL, *folder_array = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
 	fm_list_foreach(file_info_list, add_to_capabilities, capabilities_array);
 	fm_list_foreach(file_info_list, add_to_schemes, schemes_array);
+	fm_list_foreach(file_info_list, add_to_folders, folder_array);
 	/* Pre-processing done */
 
 	/* Validate profiles */
@@ -248,4 +250,11 @@ void add_to_schemes(gpointer data, gpointer user_data)
 
 	g_ptr_array_add(schemes_array, (gpointer) scheme);
 	g_free(uri);
+}
+
+void add_to_folders(gpointer data, gpointer user_data)
+{
+	//FmFileInfo *fi = (FmFileInfo *)data;
+	//GPtrArray *folders_array = (GPtrArray *)user_data;
+
 }

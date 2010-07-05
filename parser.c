@@ -248,7 +248,7 @@ FmConditions* parse_conditions(GKeyFile *keyfile, gchar *group_name)
 
 	conditions->selectioncount = g_key_file_get_string(keyfile, group_name, "SelectionCount", NULL);
 	conditions->schemes = g_key_file_get_string_list(keyfile, group_name, "Schemes", &conditions->n_schemes, NULL);
-	conditions->folderlist = g_key_file_get_string_list(keyfile, group_name, "FolderList", &conditions->n_folderlist, NULL);
+	conditions->folderlist = g_key_file_get_string_list(keyfile, group_name, "Folders", &conditions->n_folderlist, NULL);
 	conditions->capabilities = g_key_file_get_string_list(keyfile, group_name, "Capabilities", &conditions->n_capabilities, NULL);
 
 	return conditions;

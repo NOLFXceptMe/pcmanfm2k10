@@ -24,10 +24,10 @@ TODO: ShowIfRegistered
 DONE: ShowIfTrue
 DONE: ShowIfRunning
 DONE: MimeTypes
-DONE: Basenames (except for negating)
+DONE: Basenames
 DONE: Matchcase
 DONE: SelectionCount
 DONE: Schemes
-TODO: Folders
+DONE: Folders (sans negation)
 DONE: Capabilities
 (*)TODO: Parameter substitution at runtime [hard?]
