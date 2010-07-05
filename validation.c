@@ -318,8 +318,6 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* The following two conditions, matchcase and basenames are to be validated together */
 	/* Matchcase and Basenames evalutation*/
-	gboolean negate_matching_basenames = FALSE;
-
 	if(conditions->n_basenames > 0){
 		matchcase = conditions->matchcase;
 
@@ -327,8 +325,8 @@ gboolean validate_conditions(FmConditions *conditions)
 		atleast_one_match = FALSE;
 		for(i=0;i<conditions->n_basenames;++i){
 			//printf("validating basename \"%s\"\n", conditions->basenames[i]);
-			if(conditions->basenames[i][0] == '!')
-				negate_matching_basenames = TRUE;
+			if(g_strstrip(conditions->basenames[i])[0] == '!')							/* First pass, only deal with non-negating conditions */
+				continue;
 
 			if(g_strcmp0(conditions->basenames[i], "*") == 0)
 				break;
@@ -351,9 +349,42 @@ gboolean validate_conditions(FmConditions *conditions)
 			if(atleast_one_match == TRUE)
 				break;
 		}
+
+		if(atleast_one_match == FALSE)
+			basenames = FALSE;
+
+		if(basenames == TRUE){											/* Second pass, validate negating conditions */
+			atleast_one_negation = FALSE;
+			for(i=0; i<conditions->n_basenames; ++i){
+				if(g_strstrip(conditions->basenames[i])[0] != '!')
+					continue;
+
+				conditions->basenames[i] = conditions->basenames[i]+1;
+
+				/* Iterate over the basenames of the selected items and validate */
+				for(j=0;j<base_names->len;++j){
+					//printf("Negation: Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+					if(matchcase == TRUE){
+						if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
+							atleast_one_negation = TRUE;
+							break;
+						}
+					} else {
+						if(g_ascii_strcasecmp(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
+							atleast_one_negation = TRUE;
+							break;
+						}
+					}
+				}
+				if(atleast_one_negation == TRUE)
+					break;
+			}
+			if(atleast_one_negation == TRUE)
+				basenames = FALSE;
+		}
 	}
-	if(atleast_one_match == FALSE)
-		basenames = FALSE;
+
+
 
 	if(basenames == FALSE){
 		isValid = FALSE;

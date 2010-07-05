@@ -23,7 +23,7 @@ DONE: TryExec
 TODO: ShowIfRegistered
 DONE: ShowIfTrue
 DONE: ShowIfRunning
-DONE: MimeTypes (except for negating)
+DONE: MimeTypes
 DONE: Basenames (except for negating)
 DONE: Matchcase
 DONE: SelectionCount
