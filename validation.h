@@ -6,6 +6,7 @@ GPtrArray* retrieve_valid_actions(GHashTable *fmActions, GPtrArray *valid_profil
 void validate_profile(gpointer key, gpointer value, gpointer profile_array);
 void validate_action(gpointer key, gpointer value, gpointer action_array);
 gboolean validate_conditions(FmConditions *conditions);
+gboolean match_folder_pair(gchar *, gchar *);
 
 typedef struct _FmCapabilities FmCapabilities;
 

@@ -4,7 +4,6 @@
 #include<stdlib.h>
 #include<unistd.h>
 
-
 #include "parser.h"
 #include "validation.h"
 
@@ -471,50 +470,19 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* Folderlist validation */
 	gchar current_directory[1024];
-	gchar **folder_split_i = NULL, **cwd_split = NULL;
-	gsize level_i, level_j;
 
 	if(conditions->n_folderlist >= 0){
 		getcwd(current_directory, 1024);
-		cwd_split = g_strsplit(current_directory, "/", 0);
 
 		for(i=0; i<conditions->n_folderlist; ++i){				/* First Pass: Iterate over the folder list, to find if our current directory lies in any of them */
 			if(g_strstrip(conditions->folderlist[i])[0] == '!')
 				continue;
 			printf("Validating wrt folder %d: %s\n", i, conditions->folderlist[i]);
 
-			folder_split_i = g_strsplit(conditions->folderlist[i], "/", 0);
-			level_i = level_j = 0;
-
-			while(folder_split_i[level_i] != NULL){
-				if(g_strcmp0(folder_split_i[level_i], "*") == 0){
-					while(g_strcmp0(folder_split_i[level_i], "*") == 0)			/* For the case when we write /path/to/ * / * / * */
-						level_i++;
-
-					if(folder_split_i[level_i] == NULL){
-						break;
-					}
-
-					while(cwd_split[level_j] != NULL){
-						if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
-							level_j++;
-						} else {
-							break;
-						}
-					}
-					if(cwd_split[level_j] == NULL){
-						folderlist = FALSE;
-						break;
-					}
-				}
-
-				if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
-					folderlist = FALSE;
-					break;
-				}
-
-				++level_i, ++level_j;
-			}
+			folderlist = match_folder_pair(conditions->folderlist[i], current_directory);
+			
+			if(folderlist == TRUE)
+				break;
 		}
 
 		//if(folderlist == TRUE){
@@ -614,4 +582,49 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	return isValid;
+}
+
+gboolean match_folder_pair(gchar *folderlist_i, gchar *cwd)
+{
+	gchar **folder_split_i = NULL, **cwd_split = NULL;
+	gboolean folderlist = TRUE;
+	gsize level_i = 0, level_j = 0;
+
+	folder_split_i = g_strsplit(folderlist_i, "/", 0);
+	cwd_split = g_strsplit(cwd, "/", 0);
+
+	while(folder_split_i[level_i] != NULL){
+		if((g_strcmp0(folder_split_i[level_i], "") == 0) && folder_split_i[level_i + 1] == NULL)
+			break;
+
+		if(g_strcmp0(folder_split_i[level_i], "*") == 0){
+			while(g_strcmp0(folder_split_i[level_i], "*") == 0)			/* For the case when we write /path/to/ * / * / * */
+				level_i++;
+
+			if(folder_split_i[level_i] == NULL){
+				break;
+			}
+
+			while(cwd_split[level_j] != NULL){
+				if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
+					level_j++;
+				} else {
+					break;
+				}
+			}
+			if(cwd_split[level_j] == NULL){
+				folderlist = FALSE;
+				break;
+			}
+		}
+
+		if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
+			folderlist = FALSE;
+			break;
+		}
+
+		++level_i, ++level_j;
+	}
+
+	return folderlist;
 }
