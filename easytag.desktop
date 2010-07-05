@@ -9,8 +9,9 @@ Profiles=profile-pre-v2;
 
 [X-Action-Profile profile-pre-v2]
 Exec=easytag %d
-Basenames=*.MP3;*.flac;*.ogg;*.aac;
-Matchcase=true
-Capabilities=Owner;!Executable;
-Schemes=!file;http;
+#Basenames=*.MP3;*.flac;*.ogg;*.aac;
+MimeTypes=audio/*; !audio/x-vorbis+ogg;
+#Matchcase=true
+#Capabilities=Owner;!Executable;
+#Schemes=!file;http;
 Name[en_US.UTF-8]=Profile automatically created from pre-v2 action

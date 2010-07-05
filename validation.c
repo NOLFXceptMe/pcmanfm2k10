@@ -193,20 +193,20 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* Mimetypes validation */
 
-	gboolean atleast_one_match = TRUE;
+	gboolean atleast_one_match = TRUE, atleast_one_negation = FALSE;
 	gchar **mime_split_i = NULL, **mime_split_j = NULL;
 	gchar *content_type = NULL;
-	gboolean negate_matching_mimetypes = FALSE;
 
 	if(conditions->n_mimetypes > 0){
 		for(i=0; i<conditions->n_mimetypes; ++i){									/* Iterate on the mimetypes supported, check if it matches any of the selection */
-			if(conditions->mimetypes[i][0] == '!')
-				negate_matching_mimetypes = FALSE;
-			mime_split_i = g_strsplit(conditions->mimetypes[i], "/", 2);
-			//printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);				/* mime_split_i[0] is the content type, mime_split_i[1] is the subtype */
+			if(conditions->mimetypes[i][0] == '!')									/* This is the first pass, skip all negations */
+				continue;
 
 			if(g_strcmp0(conditions->mimetypes[i], "*") == 0)						/* * matches everything, no further checks */
 				break;
+
+			mime_split_i = g_strsplit(conditions->mimetypes[i], "/", 2);
+			//printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);				/* mime_split_i[0] is the content type, mime_split_i[1] is the subtype */
 
 			if(g_strcmp0(mime_split_i[0], "all") == 0){								/* all/? */
 				if(g_strcmp0(mime_split_i[1], "*") == 0 || g_strcmp0(mime_split_i[1], "all") == 0){			/* all/ * and all/all is the same as * */
@@ -244,28 +244,70 @@ gboolean validate_conditions(FmConditions *conditions)
 			for(j=0; j<mime_types->len; ++j){
 				mime_split_j = g_strsplit(g_ptr_array_index(mime_types, j), "/", 2);
 
-				printf("Matching %s with %s\t", mime_split_i[0], mime_split_j[0]);
+				//printf("Content Matching: %s with %s\t", mime_split_i[0], mime_split_j[0]);
 				if(g_strcmp0(mime_split_i[0], mime_split_j[0]) == 0){
-					printf("SUCCESS\n");
-					printf("Matching %s with %s\t", mime_split_i[1], mime_split_j[1]);
+					//printf("SUCCESS\n");
+					//printf("Subtype Matching: %s with %s\t", mime_split_i[1], mime_split_j[1]);
 					if(g_strcmp0(mime_split_i[1], mime_split_j[1]) == 0 || g_strcmp0(mime_split_i[1], "*") == 0 || g_strcmp0(mime_split_i[1], "all") == 0){
-						printf("SUCCESS\n");
+						//printf("SUCCESS\n");
 						/* Matched */
 						atleast_one_match = TRUE;
 						break;
 					} else {
-						printf("FAIL\n");
+						//printf("FAIL\n");
 					}
 				} else {
-					printf("FAIL\n");
+					//printf("FAIL\n");
 				}
 			}
 			if(atleast_one_match == TRUE)
 				break;
 		}
+
+		if(atleast_one_match == FALSE){
+			mimetypes = FALSE;
+		}
+
+		if(mimetypes == TRUE){			/* Enter second pass, where we check for negations */
+			atleast_one_negation = FALSE;
+			for(i=0; i<conditions->n_mimetypes; ++i){
+				//printf("MimeType %d is %s\n", i, conditions->mimetypes[i]);
+				if(g_strstrip(conditions->mimetypes[i])[0] != '!')
+					continue;
+
+				conditions->mimetypes[i] = conditions->mimetypes[i] + 1;
+				//printf("Trying to negate with %s\n", conditions->mimetypes[i]);
+
+				/* Note that !* and !all/ * and !all/all shouldn't be possible, but we still test that case */
+				if((g_strcmp0(conditions->mimetypes[i], "*") == 0) || (g_strcmp0(conditions->mimetypes[i], "all/*") == 0) || (g_strcmp0(conditions->mimetypes[i], "all/all") == 0)){
+					mimetypes = FALSE;
+					break;
+				}
+
+				/* We do not parse !all/inode and !all/allfiles. They should be represented as all/allfiles or all/inode. TODO: Is this ok? */
+
+				mime_split_i = g_strsplit(conditions->mimetypes[i], "/", 2);
+				//printf("\"%s/%s\"\n", mime_split_i[0], mime_split_i[1]);				/* mime_split_i[0] is the content type, mime_split_i[1] is the subtype */
+				
+				/* The only cases left now are !content_type/sub_type, and !content_type/ *  */
+				atleast_one_negation = FALSE;
+				for(j=0; j<mime_types->len; ++j){
+					mime_split_j = g_strsplit(g_ptr_array_index(mime_types, j), "/", 2);
+
+					if(g_strcmp0(mime_split_i[0], mime_split_j[0]) == 0){				/* Content type matches */
+						if((g_strcmp0(mime_split_i[1], "*") == 0)|| (g_strcmp0(mime_split_i[1], "all") == 0) || (g_strcmp0(mime_split_i[1], mime_split_j[1]) == 0)){
+							atleast_one_negation = TRUE;
+							break;
+						}
+					}
+				}
+				if(atleast_one_negation == TRUE)
+					break;
+			}
+			if(atleast_one_negation == TRUE)
+				mimetypes = FALSE;
+		}
 	}
-	if(atleast_one_match == FALSE)
-		mimetypes = FALSE;
 
 	/* Not extra code */
 	if(mimetypes == FALSE){
