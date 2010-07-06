@@ -18,7 +18,21 @@ typedef struct _FmMenuEntry FmMenuEntry;
 typedef struct _FmConditions FmConditions;
 typedef struct _FmDesktopEntry FmDesktopEntry;
 
+struct _FmProfileEntry {
+	gchar *id;
+	gchar *name;			/* localestring, not reqd */
+	gchar *exec;			/* string, reqd */
+	gchar *path;			/* string, not reqd */
+	gchar *executionmode;	/* string, not reqd */
+	gboolean startupnotify; /* boolean, not reqd */
+	gchar *startupwmclass;	/* string, not reqd */
+	gchar *executeas;		/* string, not reqd */
+
+	FmConditions *conditions;
+};
+
 struct _FmActionEntry {
+	gchar *id;
 	gchar *type;			/* string, not reqd */
 	gchar *name; 			/* localestring, reqd */
 	gchar *tooltip;			/* localestring, not reqd */
@@ -37,20 +51,8 @@ struct _FmActionEntry {
 	FmConditions *conditions;
 };
 
-struct _FmProfileEntry {
-	gchar *id;
-	gchar *name;			/* localestring, not reqd */
-	gchar *exec;			/* string, reqd */
-	gchar *path;			/* string, not reqd */
-	gchar *executionmode;	/* string, not reqd */
-	gboolean startupnotify; /* boolean, not reqd */
-	gchar *startupwmclass;	/* string, not reqd */
-	gchar *executeas;		/* string, not reqd */
-
-	FmConditions *conditions;
-};
-
 struct _FmMenuEntry {
+	gchar *id;
 	gchar *type;			/* string, reqd */
 	gchar *name; 			/* localestring, reqd */
 	gchar *tooltip;			/* localestring, not reqd */

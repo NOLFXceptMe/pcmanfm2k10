@@ -28,6 +28,9 @@ DONE: Basenames
 DONE: Matchcase
 DONE: SelectionCount
 DONE: Schemes
-DONE: Folders (sans negation)
+DONE: Folders
 DONE: Capabilities
+
+- Implementation of Parameter support 
+-------------------------------------
 (*)TODO: Parameter substitution at runtime [hard?]

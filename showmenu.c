@@ -19,6 +19,7 @@
 
 #include "parser.h"
 #include "validation.h"
+#include "parameter.h"
 
 void print_file_info(gpointer, gpointer);
 //void add_to_file_info_list(gpointer data, gpointer user_data);
@@ -42,16 +43,20 @@ int main(int argc, char *argv[])
 	gsize i;
 	FmProfileEntry *fmProfileEntry;
 	FmActionEntry *fmActionEntry;
-	GPtrArray *fmProfileEntries, *fmActionEntries;
-	GHashTable *fmProfiles, *fmActions;
+	FmMenuEntry *fmMenuEntry;
+	GPtrArray *fmProfileEntries, *fmActionEntries, *fmMenuEntries;
+	GHashTable *fmProfiles, *fmActions, *fmMenus;
 
 	FmDesktopEntry *desktop_entry = parse(argv[1]);
 
 	fmProfileEntries = desktop_entry->fmProfileEntries;
 	fmActionEntries = desktop_entry->fmActionEntries;
+	fmMenuEntries = desktop_entry->fmMenuEntries;
 
 	fmProfiles = g_hash_table_new(NULL, NULL);
 	fmActions = g_hash_table_new(NULL, NULL);
+	fmMenus = g_hash_table_new(NULL, NULL);
+
 	mime_types = g_ptr_array_new();
 	base_names = g_ptr_array_new();
 	capabilities_array = g_ptr_array_new();
@@ -65,6 +70,11 @@ int main(int argc, char *argv[])
 	for(i=0;i<desktop_entry->n_action_entries;++i){
 		fmActionEntry = g_ptr_array_index(fmActionEntries, i);
 		g_hash_table_insert(fmActions, fmActionEntry->name, fmActionEntry);
+	}
+
+	for(i=0;i<desktop_entry->n_menu_entries;++i){
+		fmMenuEntry = g_ptr_array_index(fmMenuEntries, i);
+		g_hash_table_insert(fmMenus, fmMenuEntry->name, fmMenuEntry);
 	}
 
 	/* Set some base conditions */
@@ -132,6 +142,11 @@ int main(int argc, char *argv[])
 	}
 
 	/* Validate menus */
+	GPtrArray *valid_menus = retrieve_valid_menus(fmMenus, valid_actions);
+	for(i=0;i<valid_menus->len;++i){
+		fmMenuEntry = g_ptr_array_index(valid_menus, i);
+		printf("%s is a valid menu\n", fmMenuEntry->name);
+	}
 
 	/* Show context menu */
 	/* Context menu will show valid actions and menus */

@@ -14,6 +14,8 @@
 
 FmDesktopEntry* parse(gchar* file_name)
 {
+	gchar *desktop_file_id = g_strndup(file_name, strlen(file_name) - strlen(strrchr(file_name, '.')));
+
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;
 	GError *error = NULL;
@@ -38,7 +40,7 @@ FmDesktopEntry* parse(gchar* file_name)
 
 	/* Initialize desktop entry structure */
 	fmDesktopEntry = g_slice_new0(FmDesktopEntry);
-	fmDesktopEntry->desktop_file_id = g_strndup(file_name, strlen(file_name) - strlen(strrchr(file_name, '.')));
+	fmDesktopEntry->desktop_file_id = g_strdup(desktop_file_id);
 	fmDesktopEntry->n_action_entries = 0;
 	fmDesktopEntry->n_profile_entries = 0;
 	fmDesktopEntry->n_menu_entries = 0;
@@ -70,6 +72,7 @@ FmDesktopEntry* parse(gchar* file_name)
 				type = ACTION_ENTRY;
 				fmActionEntry = parse_action_entry(keyfile, group_names[i]);
 				if(fmActionEntry != NULL){
+					fmActionEntry->id = g_strdup(desktop_file_id);
 					fmDesktopEntry->n_action_entries++;
 					g_ptr_array_add(fmDesktopEntry->fmActionEntries, (gpointer) fmActionEntry);
 				}
@@ -79,6 +82,7 @@ FmDesktopEntry* parse(gchar* file_name)
 				type = MENU_ENTRY;
 				fmMenuEntry = parse_menu_entry(keyfile, group_names[i]);
 				if(fmMenuEntry != NULL){
+					fmMenuEntry->id = g_strdup(desktop_file_id);
 					fmDesktopEntry->n_menu_entries++;
 					g_ptr_array_add(fmDesktopEntry->fmMenuEntries, (gpointer) fmMenuEntry);
 				}

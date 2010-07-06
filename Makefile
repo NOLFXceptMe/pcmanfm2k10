@@ -16,6 +16,8 @@ action: parser.o
 
 profile: parser.o
 
+validation.o: parser.o
+
 showmenu: $(OBJS)
 
 clean:

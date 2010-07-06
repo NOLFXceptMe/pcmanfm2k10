@@ -14,6 +14,7 @@ typedef struct _valid_arrays_type valid_arrays_type;
 struct _valid_arrays_type {
 	GPtrArray *profile_array;
 	GPtrArray *action_array;
+	GPtrArray *menu_array;
 };
 
 /* Iterates through the profiles hash table and returns an array of valid ones */
@@ -29,14 +30,30 @@ GPtrArray* retrieve_valid_profiles(GHashTable *fmProfiles)
 GPtrArray* retrieve_valid_actions(GHashTable *fmActions, GPtrArray *valid_profiles)
 {
 	GPtrArray *valid_actions_array = g_ptr_array_new();
-	valid_arrays_type *valid_arrays_temp = g_new(valid_arrays_type, 1);
 
+	valid_arrays_type *valid_arrays_temp = g_new(valid_arrays_type, 1);
 	valid_arrays_temp->profile_array = valid_profiles;
 	valid_arrays_temp->action_array = valid_actions_array;
+	valid_arrays_temp->menu_array = NULL;
 
 	g_hash_table_foreach(fmActions, (GHFunc) validate_action, valid_arrays_temp);
 
 	return valid_actions_array;
+}
+
+/* Iterates through the menus hash tables, and validates them using the array of valid actions, and returns an array of valid menus */
+GPtrArray* retrieve_valid_menus(GHashTable *fmMenus, GPtrArray *valid_actions)
+{
+	GPtrArray *valid_menus_array = g_ptr_array_new();
+
+	valid_arrays_type *valid_arrays_temp = g_new(valid_arrays_type, 1);
+	valid_arrays_temp->profile_array = NULL;
+	valid_arrays_temp->action_array = valid_actions;
+	valid_arrays_temp->menu_array = valid_menus_array;
+
+	g_hash_table_foreach(fmMenus, (GHFunc) validate_menu, valid_arrays_temp);
+
+	return valid_menus_array;
 }
 
 /* Validate a single profile and add to the valid_profiles_array */
@@ -65,8 +82,8 @@ void validate_action(gpointer key, gpointer value, gpointer user_data)
 	gchar *name = g_strdup(key);
 	FmActionEntry *action = (FmActionEntry *)value;
 	valid_arrays_type *valid_arrays = (valid_arrays_type *)user_data;
-	GPtrArray *valid_actions_array = valid_arrays->action_array;
 	GPtrArray *valid_profiles_array = valid_arrays->profile_array;
+	GPtrArray *valid_actions_array = valid_arrays->action_array;
 	gsize i, j;
 
 	FmConditions *conditions = action->conditions;
@@ -91,6 +108,40 @@ void validate_action(gpointer key, gpointer value, gpointer user_data)
 		printf("[FAIL]: Conditions not satisfied\n");
 	}
 	printf("\n");
+}
+
+/* Validate a single menu item and add to valid_menus_array */
+void validate_menu(gpointer key, gpointer value, gpointer user_data)
+{
+	gchar *name = g_strdup(key);
+	FmMenuEntry *menu = (FmMenuEntry *)value;
+	valid_arrays_type *valid_arrays = (valid_arrays_type *)user_data;
+	GPtrArray *valid_actions_array = valid_arrays->action_array;
+	GPtrArray *valid_menus_array = valid_arrays->menu_array;
+	gsize i, j;
+
+	FmConditions *conditions = menu->conditions;
+	gboolean menu_validity = validate_conditions(conditions);
+	printf("Validating menu \"%s\"\n", name);
+	if(menu_validity == TRUE){
+		/* Validate according to available actions */
+		/* TODO: Even submenus are acceptable. Should support that */
+		for(i=0; i<menu->n_itemslist; ++i){
+			printf("Trying to find action %s in validated actions\t", menu->itemslist[i]);
+			for(j=0; j<valid_actions_array->len; ++j){
+				if(g_strcmp0(g_strstrip(menu->itemslist[i]), g_strstrip(((FmActionEntry *)g_ptr_array_index(valid_actions_array, j))->name)) == 0){
+					printf("1: [OK]\n");
+					printf("%s is a valid action\n", name);
+					g_ptr_array_add(valid_menus_array, menu);
+					return;
+				}
+			}
+			printf("1: [FAIL]\n");
+		}
+		printf("[FAIL]: No valid item found\n");
+	} else {
+		printf("[FAIL]: Conditions not satisfied\n");
+	}
 }
 
 gboolean validate_conditions(FmConditions *conditions)
