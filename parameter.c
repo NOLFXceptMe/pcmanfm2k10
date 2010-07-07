@@ -22,6 +22,7 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 	GString *g_string_i = NULL;
 	gchar *file_name;
 	gboolean array_is_init = FALSE;
+	char temp[256];
 
 	while((pos = strchr(pos, '%')) != NULL){
 		switch(pos[1]){
@@ -37,6 +38,7 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 					g_string_append_c(g_string_i, ' ');
 				}
 				break;
+
 			case 'B':
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
@@ -50,17 +52,21 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 					}
 				}
 				break;
-			case 'c':
-				if(array_is_init == FALSE)
-					for(i=0; i<len_file_list; ++i)
-						g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
-				break;
-			case 'C':
+			case 'c':
+				memset(temp, 256, 0);
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					sprintf(temp, "%u", len_file_list);
+					g_string_append(g_string_i, temp);
+					g_string_append_c(g_string_i, ' ');
+				}
+
 				break;
+
 			case 'd':
 				if(array_is_init == FALSE)
 					for(i=0; i<len_file_list; ++i)

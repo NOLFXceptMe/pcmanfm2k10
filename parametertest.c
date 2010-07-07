@@ -15,7 +15,7 @@ int main()
 	fm_init(NULL);
 
 	GPtrArray *out_string_array = NULL;
-	gchar *input_string = "echo %B %b";
+	gchar *input_string = "echo %b %c";
 
 	FmPathList *path_list = fm_path_list_new();
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
