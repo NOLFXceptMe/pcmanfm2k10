@@ -2,6 +2,8 @@
  * Output: A string list with parameters substituted 
  * */
 
+/* TODO: Parsing URIs is a pain. Especially for host name, and port. A better way to do is split according to the grammar of RFC 3986. Later */
+
 #include<glib.h>
 #include<string.h>
 
@@ -394,6 +396,7 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 
 gchar *get_host_name(FmFileInfo *file_info)
 {
+	/* TODO: Update to support IPv6. Different rules just for IPv6. Hence, ignoring */
 	gchar *host_name = NULL;
 	gsize host_length;
 	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
@@ -424,19 +427,27 @@ gchar *get_host_name(FmFileInfo *file_info)
 gchar *get_user_name(FmFileInfo *file_info)
 {
 	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
-	gchar *user_pos = strchr(uri, ':');
+	gsize user_length;
+	gchar *user_pos = NULL, *user_name = NULL;
+
+	user_pos = strchr(uri, ':');
 	if(user_pos == NULL) return "";
 	user_pos += 1;
 	if(strncmp(user_pos, "//", 2) == 0)
 		user_pos += 2;
-	gsize user_length = strcspn(user_pos, "@");
-	gchar *user_name = g_strndup(user_pos, user_length);
+	if(strchr(user_pos, '@') != NULL){
+		user_length = strcspn(user_pos, "@");
+		user_name = g_strndup(user_pos, user_length);
+	} else {
+		user_name = "";
+	}
 
 	return user_name;
 }
 
 gchar *get_port(FmFileInfo *file_info)
 {
+	/* TODO: Update for IPv6 support */
 	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
 	gchar *user_pos = strchr(uri, ':') + 1;
 	user_pos += 1;
