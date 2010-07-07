@@ -6,7 +6,7 @@ LDFLAGS+=`pkg-config --libs glib-2.0` `pkg-config --libs libfm` `pkg-config --li
 
 INCLUDE=include/
 BIN=action profile showmenu
-OBJS=parser.o validation.o
+OBJS=parser.o validation.o parameter.o
 
 all: $(BIN)
 
@@ -15,6 +15,8 @@ main:
 action: parser.o
 
 profile: parser.o
+
+parametertest: parameter.o
 
 validation.o: parser.o
 
