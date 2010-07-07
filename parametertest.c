@@ -15,12 +15,15 @@ int main()
 	fm_init(NULL);
 
 	GPtrArray *out_string_array = NULL;
-	gchar *input_string = "echo %b %c";
+	gchar *input_string = "cat %%";
 
 	FmPathList *path_list = fm_path_list_new();
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
+	fm_list_push_tail(path_list, fm_path_new("http://localhost:8000/"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Einstein_german.ogg"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Roggan.mp3"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Music"));
 	
 	/* Make a list of file infos from the path_list */
 	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */

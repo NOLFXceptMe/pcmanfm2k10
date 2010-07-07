@@ -9,6 +9,11 @@
 
 void print_gstring(gpointer data, gpointer user_data);
 
+gchar *get_host_name(FmFileInfo *file_info);
+gchar *get_user_name(FmFileInfo *file_info);
+gchar *get_port(FmFileInfo *file_info);
+gchar *get_scheme(FmFileInfo *file_info);
+
 GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_list)
 {
 	gsize i, j;
@@ -20,40 +25,56 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 	gchar *pos = input_string + first_pos;
 	g_string_append_len(out_string, input_string, first_pos);
 	GString *g_string_i = NULL;
-	gchar *file_name;
+	gchar *file_name = NULL, *host_name = NULL, *user_name = NULL, *port = NULL, *scheme = NULL, *uri = NULL, *file_name_wo_ext = NULL, *ext_pos = NULL;
 	gboolean array_is_init = FALSE;
+	FmFileInfo *file_info_i = NULL, *file_info_j = NULL;
 	char temp[256];
 
 	while((pos = strchr(pos, '%')) != NULL){
 		switch(pos[1]){
 			case 'b':
-				if(array_is_init == FALSE)
-					for(i=0; i<len_file_list; ++i)
-						g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+				/* Works */
+				if(array_is_init == FALSE){
+					for(i=0; i<len_file_list; ++i){
+						g_string_i = g_string_new(out_string->str);
+						file_info_i = fm_list_peek_nth(file_info_list, i);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+						g_string_append(g_string_i, file_name);
+						g_string_append_c(g_string_i, ' ');
 
+						g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+						g_string_free(g_string_i, TRUE);
+					}
+					break;
+				}
+
+				file_info_i = fm_list_peek_head(file_info_list);
+				file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
 				for(i=0; i<out_string_array->len; ++i){
 					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
-					file_name = (gchar *)fm_file_info_get_disp_name(fm_list_peek_nth(file_info_list, i));
 					g_string_append(g_string_i, file_name);
 					g_string_append_c(g_string_i, ' ');
 				}
-				break;
 
+				break;
 			case 'B':
+				/* Works */
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
 				for(i=0; i<out_string_array->len; ++i){
 					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
 					for(j=0; j<len_file_list; ++j){
-						file_name = (gchar *)fm_file_info_get_disp_name(fm_list_peek_nth(file_info_list, j));
+						file_info_j= fm_list_peek_nth(file_info_list, j);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_j);
 						g_string_append(g_string_i, file_name);
 						g_string_append_c(g_string_i, ' ');
 					}
 				}
-				break;
 
+				break;
 			case 'c':
+				/* Works */
 				memset(temp, 256, 0);
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
@@ -66,63 +87,299 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 				}
 
 				break;
-
 			case 'd':
 				if(array_is_init == FALSE)
 					for(i=0; i<len_file_list; ++i)
 						g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
+				/*
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					file_info_i = fm_list_peek_nth(file_info_list, i);
+					if(fm_file_info_is_dir(file_info_i)){
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+						g_string_append(g_string_i, file_name);
+						g_string_append_c(g_string_i, ' ');
+					}
+				}
+				*/
 				break;
 			case 'D':
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
+				/*
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					if(fm_file_info_is_dir(file_info_i)){
+						for(j=0; j<len_file_list; ++j){
+							file_info_j = fm_list_peek_nth(file_info_list, j);
+							if(fm_file_info_is_dir(file_info_j)){
+								file_name = (gchar *)fm_file_info_get_disp_name(fm_list_peek_nth(file_info_list, j));
+								g_string_append(g_string_i, file_name);
+								g_string_append_c(g_string_i, ' ');
+							}
+						}
+					}
+				}
+				*/
 				break;
 			case 'f':
-				if(array_is_init == FALSE)
-					for(i=0; i<len_file_list; ++i)
-						g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+				/* Works */
+				/* Is the same as %b for now */
+				if(array_is_init == FALSE){
+					for(i=0; i<len_file_list; ++i){
+						g_string_i = g_string_new(out_string->str);
+						file_info_i = fm_list_peek_nth(file_info_list, i);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+						g_string_append(g_string_i, file_name);
+						g_string_append_c(g_string_i, ' ');
+
+						g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+						g_string_free(g_string_i, TRUE);
+					}
+					break;
+				}
+
+				file_info_i = fm_list_peek_head(file_info_list);
+				file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					g_string_append(g_string_i, file_name);
+					g_string_append_c(g_string_i, ' ');
+				}
 
 				break;
 			case 'F':
+				/* Works */
+				/* Is the same as %B for now */
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					for(j=0; j<len_file_list; ++j){
+						file_info_j= fm_list_peek_nth(file_info_list, j);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_j);
+						g_string_append(g_string_i, file_name);
+						g_string_append_c(g_string_i, ' ');
+					}
+				}
 
 				break;
 			case 'h':
-				break;
-			case 'n':
-				break;
-			case 'p':
-				break;
-			case 's':
-				break;
-			case 'u':
-				if(array_is_init == FALSE)
-					for(i=0; i<len_file_list; ++i)
-						g_ptr_array_add(out_string_array, g_string_new(out_string->str));
-				break;
-			case 'U':
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					file_info_i = fm_list_peek_nth(file_info_list, i);
+					host_name = get_host_name(file_info_i);
+					g_string_append(g_string_i, host_name);
+					g_string_append_c(g_string_i, ' ');
+				}
+				break;
+			case 'n':
+				if(array_is_init == FALSE)
+					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					file_info_i = fm_list_peek_nth(file_info_list, i);
+					user_name = get_user_name(file_info_i);
+					g_string_append(g_string_i, user_name);
+					g_string_append_c(g_string_i, ' ');
+				}
+				break;
+			case 'p':
+				if(array_is_init == FALSE)
+					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					file_info_i = fm_list_peek_nth(file_info_list, i);
+					port = get_port(file_info_i);
+					g_string_append(g_string_i, port);
+					g_string_append_c(g_string_i, ' ');
+				}
+				break;
+			case 's':
+				if(array_is_init == FALSE)
+					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					file_info_i = fm_list_peek_nth(file_info_list, i);
+					scheme = get_scheme(file_info_i);
+					g_string_append(g_string_i, scheme);
+					g_string_append_c(g_string_i, ' ');
+				}
+
+				break;
+			case 'u':
+				/* Works */
+				if(array_is_init == FALSE){
+					for(i=0; i<len_file_list; ++i){
+						g_string_i = g_string_new(out_string->str);
+						file_info_i = fm_list_peek_nth(file_info_list, i);
+						uri = fm_path_to_uri(fm_file_info_get_path(file_info_i));
+						g_string_append(g_string_i, uri);
+						g_string_append_c(g_string_i, ' ');
+
+						g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+						g_string_free(g_string_i, TRUE);
+					}
+					break;
+				}
+
+				file_info_i = fm_list_peek_head(file_info_list);
+				uri = fm_path_to_uri(fm_file_info_get_path(file_info_i));
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					g_string_append(g_string_i, uri);
+					g_string_append_c(g_string_i, ' ');
+				}
+
+				break;
+			case 'U':
+				/* Works */
+				if(array_is_init == FALSE)
+					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					for(j=0; j<len_file_list; ++j){
+						file_info_j= fm_list_peek_nth(file_info_list, j);
+						uri = fm_path_to_uri(fm_file_info_get_path(file_info_j));
+						g_string_append(g_string_i, uri);
+						g_string_append_c(g_string_i, ' ');
+					}
+				}
 
 				break;
 			case 'w':
+				/* Works */
+				if(array_is_init == FALSE){
+					for(i=0; i<len_file_list; ++i){
+						g_string_i = g_string_new(out_string->str);
+						file_info_i = fm_list_peek_nth(file_info_list, i);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+						//printf("%s\n", file_name);
+
+						ext_pos = g_strrstr(fm_file_info_get_disp_name(fm_list_peek_nth(file_info_list, i)), ".");
+						if(ext_pos != NULL)
+							file_name_wo_ext = g_strndup(file_name, strlen(file_name) - strlen(ext_pos));
+						else
+							file_name_wo_ext = g_strdup(file_name);
+
+						g_string_append(g_string_i, file_name_wo_ext);
+						g_string_append_c(g_string_i, ' ');
+						g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+
+						g_free(file_name_wo_ext);
+						g_string_free(g_string_i, TRUE);
+					}
+					break;
+				}
+
+				file_info_i = fm_list_peek_head(file_info_list);
+				file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+				ext_pos = g_strrstr(file_name, ".");
+				if(ext_pos != NULL)
+					file_name_wo_ext = g_strndup(file_name, strlen(file_name) - strlen(ext_pos));
+				else
+					file_name_wo_ext = g_strdup(file_name);
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					g_string_append(g_string_i, file_name_wo_ext);
+					g_string_append_c(g_string_i, ' ');
+				}
+				g_free(file_name_wo_ext);
 				break;
 			case 'W':
-				break;
-			case 'x':
-				if(array_is_init == FALSE)
-					for(i=0; i<len_file_list; ++i)
-						g_ptr_array_add(out_string_array, g_string_new(out_string->str));
-
-				break;
-			case 'X':
+				/* Works */
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					for(j=0; j<len_file_list; ++j){
+						file_info_j= fm_list_peek_nth(file_info_list, j);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_j);
+						ext_pos = g_strrstr(file_name, ".");
+						if(ext_pos != NULL)
+							file_name_wo_ext = g_strndup(file_name, strlen(file_name) - strlen(ext_pos));
+						else
+							file_name_wo_ext = g_strdup(file_name);
+						g_string_append(g_string_i, file_name_wo_ext);
+						g_string_append_c(g_string_i, ' ');
+						g_free(file_name_wo_ext);
+					}
+				}
+				break;
+			case 'x':
+				/* Works */
+				if(array_is_init == FALSE){
+					for(i=0; i<len_file_list; ++i){
+						file_info_i = fm_list_peek_nth(file_info_list, i);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+						ext_pos = g_strrstr(file_name, ".");
+						if(ext_pos != NULL){
+							g_string_i = g_string_new(out_string->str);
+							g_string_append(g_string_i, ext_pos);
+							g_string_append_c(g_string_i, ' ');
+							g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+
+							g_free(file_name_wo_ext);
+							g_string_free(g_string_i, TRUE);
+						}
+					}
+					break;
+				}
+
+				file_info_i = fm_list_peek_head(file_info_list);
+				file_name = (gchar *)fm_file_info_get_disp_name(file_info_i);
+				ext_pos = g_strrstr(file_name, ".");
+				if(ext_pos == NULL)
+					break;
+
+				for(i=0; i<out_string_array->len;++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					g_string_append(g_string_i, ext_pos);
+					g_string_append_c(g_string_i, ' ');
+				}
+
+				break;
+			case 'X':
+				/* Works */
+				if(array_is_init == FALSE)
+					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					for(j=0; j<len_file_list; ++j){
+						file_info_j= fm_list_peek_nth(file_info_list, j);
+						file_name = (gchar *)fm_file_info_get_disp_name(file_info_j);
+						ext_pos = g_strrstr(file_name, ".");
+						if(ext_pos != NULL){
+							g_string_append(g_string_i, ext_pos);
+							g_string_append_c(g_string_i, ' ');
+						}
+					}
+				}
+
 				break;
 			case '%':
+				/* Works */
+				if(array_is_init == FALSE)
+					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
+
+				for(i=0; i<out_string_array->len; ++i){
+					g_string_i = (GString *)g_ptr_array_index(out_string_array, i);
+					g_string_append(g_string_i, "% ");
+				}
+
 				break;
 			default:
 				return NULL;
@@ -131,10 +388,74 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 		pos += 2;
 		(array_is_init == FALSE)?array_is_init = TRUE:0;
 	}
-	/*
-	out_string = g_strcpy(temp_string0);
-	g_free(temp_string0);
-	*/
 
 	return out_string_array;
 }
+
+gchar *get_host_name(FmFileInfo *file_info)
+{
+	gchar *host_name = NULL;
+	gsize host_length;
+	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
+	gchar *user_pos = strchr(uri, ':');
+
+	if(user_pos == NULL) return "";
+	user_pos += 1;
+	if(strncmp(user_pos, "//", 2) == 0)
+		user_pos += 2;
+	gchar *host_pos = strchr(uri, '@');
+	if(host_pos == NULL)
+		host_pos = user_pos;
+	else
+		host_pos += 1;
+
+	if(strchr(host_pos, ':') != NULL){
+		host_length = strcspn(host_pos, ":");
+		host_name = g_strndup(host_pos, host_length);
+	} else {
+		printf("here\n");
+		host_length = strcspn(host_pos, "/");
+		host_name = g_strndup(host_pos, host_length);
+	}
+
+	return host_name;
+}
+
+gchar *get_user_name(FmFileInfo *file_info)
+{
+	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
+	gchar *user_pos = strchr(uri, ':');
+	if(user_pos == NULL) return "";
+	user_pos += 1;
+	if(strncmp(user_pos, "//", 2) == 0)
+		user_pos += 2;
+	gsize user_length = strcspn(user_pos, "@");
+	gchar *user_name = g_strndup(user_pos, user_length);
+
+	return user_name;
+}
+
+gchar *get_port(FmFileInfo *file_info)
+{
+	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
+	gchar *user_pos = strchr(uri, ':') + 1;
+	user_pos += 1;
+	if(strncmp(user_pos, "//", 2) == 0)
+		user_pos += 2;
+	gchar *port_pos = strchr(user_pos, ':');
+	if(port_pos == NULL) return "";
+	gsize port_length = strcspn(port_pos, "/");
+	gchar *port = g_strndup(port_pos, port_length) + 1;
+
+	return port;
+}
+
+gchar *get_scheme(FmFileInfo *file_info)
+{
+	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
+	gsize scheme_len = strcspn(uri, ":");
+	gchar *scheme = g_strndup(uri, scheme_len);
+
+	return scheme;
+}
+

@@ -5,7 +5,7 @@ LD=gcc
 LDFLAGS+=`pkg-config --libs glib-2.0` `pkg-config --libs libfm` `pkg-config --libs gio-unix-2.0`
 
 INCLUDE=include/
-BIN=action profile showmenu
+BIN=action profile parametertest showmenu
 OBJS=parser.o validation.o parameter.o
 
 all: $(BIN)
