@@ -391,7 +391,7 @@ gboolean validate_conditions(FmConditions *conditions)
 		/* Basenames validation */
 		atleast_one_match = FALSE;
 		for(i=0;i<conditions->n_basenames;++i){
-			//printf("validating basename \"%s\"\n", conditions->basenames[i]);
+			printf("validating basename \"%s\"\n", conditions->basenames[i]);
 			if(g_strstrip(conditions->basenames[i])[0] == '!')							/* First pass, only deal with non-negating conditions */
 				continue;
 
@@ -400,7 +400,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			/* Iterate over the basenames of the selected items and validate */
 			for(j=0;j<base_names->len;++j){
-				//printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
 				if(matchcase == TRUE){
 					if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
 						atleast_one_match = TRUE;

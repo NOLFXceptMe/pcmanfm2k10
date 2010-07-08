@@ -10,5 +10,6 @@ Profiles=profile-pre-v2;
 [X-Action-Profile profile-pre-v2]
 MimeTypes=audio/*;
 Exec=easytag %d
-TryExec=
+Basenames=*.c;
+Matchcase=false;
 Name[en_US.UTF-8]=Profile automatically created from pre-v2 action

@@ -39,9 +39,9 @@ TODO for 8th July
 -----------------
 Fix implementations
 
-- Basenames
-- Parameters %d and %D
-- Parameters %b and %B, %f and %F
+- Basenames [Can we use GNU libraries? #postpone ]
+- Parameters %d and %D  [DONE]
+- Parameters %b and %B, %f and %F [DONE]
 - TryExec (if possible)
 - Make showmenu accept multiple files OR make it a module, and have a higher up collect the results. Recommend the former.
 

@@ -203,20 +203,9 @@ void add_to_base_names(gpointer data, gpointer user_data)
 	FmFileInfo *file_info = (FmFileInfo *)data;
 	GPtrArray *base_names = (GPtrArray *)user_data;
 	gchar *display_name = (gchar *)fm_file_info_get_disp_name(file_info);
-	gchar *base_name_temp = g_strrstr(display_name, ".");
-	if(base_name_temp == NULL)
-		return;
-	gchar *base_name = g_strconcat("*", base_name_temp, NULL);
+	gchar *base_name = g_strdup(display_name);
 
-	guint i;
-	gchar *base_name_i;
-	for(i = 0; i<base_names->len; i++){
-		base_name_i = (gchar *)g_ptr_array_index(base_names, i);
-		if(g_strcmp0(base_name, base_name_i) == 0)
-			return;
-	}
-
-	//printf("Adding %s to base_names\n", base_name);
+	printf("Adding %s to base_names\n", base_name);
 	g_ptr_array_add(base_names, (gpointer) base_name);
 }
 
