@@ -15,6 +15,7 @@ int main()
 	gsize i;
 	gchar *extension = NULL;
 	GPtrArray *desktop_files_array = g_ptr_array_new();
+	gchar *desktop_files_array_entry = NULL;
 	GPtrArray *valid_actions = NULL;
 	DIR *desktop_files_folder = NULL;
 	struct dirent *dir_entry = NULL;
@@ -25,8 +26,9 @@ int main()
 		extension = strrchr(dir_entry->d_name, '.');
 		if(extension == NULL || g_strcmp0(extension, ".desktop") != 0) continue;
 
-		//printf("%s\n", dir_entry->d_name);
-		g_ptr_array_add(desktop_files_array, g_strdup(dir_entry->d_name));
+		desktop_files_array_entry = g_strconcat(DESKTOP_FILES_FOLDER, dir_entry->d_name, NULL);
+		//printf("%s\n", desktop_files_array_entry);
+		g_ptr_array_add(desktop_files_array, desktop_files_array_entry);
 	}
 	closedir(desktop_files_folder);
 

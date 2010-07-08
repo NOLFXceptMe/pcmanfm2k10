@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type = Menu
-Name = Terminal Menu
-Tooltip = Some actions on terminals
-Icon = terminal-group
-ItemsList = open-terminal;

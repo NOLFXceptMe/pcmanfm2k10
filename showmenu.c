@@ -49,7 +49,7 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	g_type_init();
 	fm_init(NULL);
 
-	gsize i;
+	gsize i, j;
 	FmProfileEntry *fmProfileEntry;
 	FmActionEntry *fmActionEntry;
 	FmMenuEntry *fmMenuEntry;
@@ -75,8 +75,8 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	}
 	*/
 
-	for(i=0; i<desktop_files_array->len; ++i){
-		desktop_entry = parse((gchar *)g_ptr_array_index(desktop_files_array, i));
+	for(j=0; j<desktop_files_array->len; ++j){
+		desktop_entry = parse((gchar *)g_ptr_array_index(desktop_files_array, j));
 
 		fmProfileEntries = desktop_entry->fmProfileEntries;
 		fmActionEntries = desktop_entry->fmActionEntries;
@@ -137,7 +137,7 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	GPtrArray *valid_profiles = retrieve_valid_profiles(fmProfiles);
 	for(i=0;i<valid_profiles->len;++i){
 		fmProfileEntry = g_ptr_array_index(valid_profiles, i);
-		printf("%s is a valid profile\n", fmProfileEntry->id);
+		printf("%s is a valid profile\n\n", fmProfileEntry->id);
 	}
 	printf("\n");
 
@@ -146,7 +146,7 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	//GPtrArray *valid_actions_names = g_ptr_array_new();
 	for(i=0;i<valid_actions->len;++i){
 		fmActionEntry = g_ptr_array_index(valid_actions, i);
-		//printf("%s is a valid action\n", fmActionEntry->name);
+		//printf("%s is a valid action\n\n", fmActionEntry->id);
 		//g_ptr_array_add(valid_actions_names, fmActionEntry->id);
 	}
 
@@ -154,7 +154,7 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	GPtrArray *valid_menus = retrieve_valid_menus(fmMenus, valid_actions);
 	for(i=0;i<valid_menus->len;++i){
 		fmMenuEntry = g_ptr_array_index(valid_menus, i);
-		printf("%s is a valid menu\n", fmMenuEntry->id);
+		printf("%s is a valid menu\n\n", fmMenuEntry->id);
 	}
 
 	/* Show context menu */

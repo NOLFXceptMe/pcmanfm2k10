@@ -66,14 +66,14 @@ void validate_profile(gpointer key, gpointer value, gpointer user_data)
 
 	gboolean profile_validity = validate_conditions(conditions);
 
-	printf("Validating profile \"%s\":\t", id);
+	//printf("Validating profile \"%s\":\t", id);
 	if(profile_validity == TRUE){
-		printf("[OK]\n");
+		//printf("[OK]\n");
 		g_ptr_array_add(valid_profiles_array, (gpointer) profile);
 	} else {
-		printf("[FAIL]\n");
+		//printf("[FAIL]\n");
 	}
-	printf("\n");
+	//printf("\n");
 
 	g_free(id);
 }
@@ -90,28 +90,29 @@ void validate_action(gpointer key, gpointer value, gpointer user_data)
 
 	FmConditions *conditions = action->conditions;
 	gboolean action_validity = validate_conditions(conditions);
-	printf("Validating action \"%s\"\n", name);
+	//printf("Validating action \"%s\"\n", name);
 	if(action_validity == TRUE){
 		/* Now validate action according to available profiles */
 		for(i=0;i<action->n_profiles;++i){
-			printf("Trying to find profile %s in validated profiles\t", action->profiles[i]);
+			//printf("Trying to find profile %s in validated profiles\t", action->profiles[i]);
 			for(j=0;j<valid_profiles_array->len;++j){
-				if(action->profiles[i] == NULL)
-					printf("Action %s, Profile %d is NULL\n", name, i);
+				if(action->profiles[i] == NULL){
+					//printf("Action %s, Profile %d is NULL\n", name, i);
+				}
 				if(g_strcmp0(g_strstrip(action->profiles[i]), g_strstrip(((FmProfileEntry *)g_ptr_array_index(valid_profiles_array, j))->id)) == 0){
-					printf("1: [OK]\n");
+					//printf("1: [OK]\n");
 					//printf("%s is a valid action\n", name);
 					g_ptr_array_add(valid_actions_array, action);
 					return;
 				}
 			}
-			printf("1: [FAIL]\n");
+			//printf("1: [FAIL]\n");
 		}
-		printf("[FAIL]: No valid profile found\n");
+		//printf("[FAIL]: No valid profile found\n");
 	} else {
-		printf("[FAIL]: Conditions not satisfied\n");
+		//printf("[FAIL]: Conditions not satisfied\n");
 	}
-	printf("\n");
+	//printf("\n");
 }
 
 /* Validate a single menu item and add to valid_menus_array */
@@ -126,27 +127,28 @@ void validate_menu(gpointer key, gpointer value, gpointer user_data)
 
 	FmConditions *conditions = menu->conditions;
 	gboolean menu_validity = validate_conditions(conditions);
-	printf("Validating menu \"%s\"\n", name);
+	//printf("Validating menu \"%s\"\n", name);
 	if(menu_validity == TRUE){
 		/* Validate according to available actions */
 		/* TODO: Even submenus are acceptable. Should support that */
 		for(i=0; i<menu->n_itemslist; ++i){
-			printf("Trying to find action %s in validated actions\t", menu->itemslist[i]);
+			//printf("Trying to find action %s in validated actions\t", menu->itemslist[i]);
 			for(j=0; j<valid_actions_array->len; ++j){
-				if(menu->itemslist[i] == NULL)
-					printf("Menu %s, item %d is NULL\n", name, i);
+				if(menu->itemslist[i] == NULL){
+					//printf("Menu %s, item %d is NULL\n", name, i);
+				}
 				if(g_strcmp0(g_strstrip(menu->itemslist[i]), g_strstrip(((FmActionEntry *)g_ptr_array_index(valid_actions_array, j))->id)) == 0){
-					printf("1: [OK]\n");
+					//printf("1: [OK]\n");
 					//printf("%s is a valid action\n", name);
 					g_ptr_array_add(valid_menus_array, menu);
 					return;
 				}
 			}
-			printf("1: [FAIL]\n");
+			//printf("1: [FAIL]\n");
 		}
-		printf("[FAIL]: No valid item found\n");
+		//printf("[FAIL]: No valid item found\n");
 	} else {
-		printf("[FAIL]: Conditions not satisfied\n");
+		//printf("[FAIL]: Conditions not satisfied\n");
 	}
 }
 
@@ -186,7 +188,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(onlyshowin == FALSE || notshowin == FALSE){
 		isValid = FALSE;
-		printf("Failed OnlyShowIn/NotShowIn validation\n");
+		//printf("Failed OnlyShowIn/NotShowIn validation\n");
 		return isValid;
 	}
 
@@ -204,7 +206,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(tryexec == FALSE){
 		isValid = FALSE;
-		printf("Failed TryExec validation\n");
+		//printf("Failed TryExec validation\n");
 		return isValid;
 	}
 
@@ -214,7 +216,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(showifregistered == FALSE){
 		isValid = FALSE;
-		printf("Failed ShowIfRegistered validation\n");
+		//printf("Failed ShowIfRegistered validation\n");
 		return isValid;
 	}
 
@@ -236,7 +238,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(showiftrue == FALSE){
 		isValid = FALSE;
-		printf("Failed ShowIfTrue validation\n");
+		//printf("Failed ShowIfTrue validation\n");
 		return isValid;
 	}
 
@@ -254,7 +256,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	
 	if(showifrunning == FALSE){
 		isValid = FALSE;
-		printf("Failed ShowIfRunning validation\n");
+		//printf("Failed ShowIfRunning validation\n");
 		return isValid;
 	}
 
@@ -379,7 +381,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	/* Not extra code */
 	if(mimetypes == FALSE){
 		isValid = FALSE;
-		printf("Failed MimeTypes validation\n");
+		//printf("Failed MimeTypes validation\n");
 		return isValid;
 	}
 
@@ -391,7 +393,7 @@ gboolean validate_conditions(FmConditions *conditions)
 		/* Basenames validation */
 		atleast_one_match = FALSE;
 		for(i=0;i<conditions->n_basenames;++i){
-			printf("validating basename \"%s\"\n", conditions->basenames[i]);
+			//printf("validating basename \"%s\"\n", conditions->basenames[i]);
 			if(g_strstrip(conditions->basenames[i])[0] == '!')							/* First pass, only deal with non-negating conditions */
 				continue;
 
@@ -400,7 +402,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			/* Iterate over the basenames of the selected items and validate */
 			for(j=0;j<base_names->len;++j){
-				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+				//printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
 				if(matchcase == TRUE){
 					if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
 						atleast_one_match = TRUE;
@@ -455,7 +457,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(basenames == FALSE){
 		isValid = FALSE;
-		printf("Failed BaseNames validation\n");
+		//printf("Failed BaseNames validation\n");
 		return isValid;
 	}
 
@@ -489,7 +491,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(selectioncount == FALSE){
 		isValid = FALSE;
-		printf("Failed SelectionCount validation\n");
+		//printf("Failed SelectionCount validation\n");
 		return isValid;
 	}
 
@@ -530,7 +532,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(schemes == FALSE){
 		isValid = FALSE;
-		printf("Failed Schemes validation\n");
+		//printf("Failed Schemes validation\n");
 		return isValid;
 	}
 
@@ -543,7 +545,7 @@ gboolean validate_conditions(FmConditions *conditions)
 		for(i=0; i<conditions->n_folderlist; ++i){				/* First Pass: Iterate over the folder list, to find if our current directory lies in any of them */
 			if(g_strstrip(conditions->folderlist[i])[0] == '!')
 				continue;
-			printf("Validating wrt folder : %s\n", conditions->folderlist[i]);
+			//printf("Validating wrt folder : %s\n", conditions->folderlist[i]);
 
 			folderlist = match_folder_pair(conditions->folderlist[i], current_directory);
 			
@@ -556,7 +558,7 @@ gboolean validate_conditions(FmConditions *conditions)
 				if(g_strstrip(conditions->folderlist[i])[0] != '!')
 					continue;
 				conditions->folderlist[i] = conditions->folderlist[i] + 1;
-				printf("Validating negation wrt folder : %s\n", conditions->folderlist[i]);
+				//printf("Validating negation wrt folder : %s\n", conditions->folderlist[i]);
 
 				folderlist = (match_folder_pair(conditions->folderlist[i], current_directory) == TRUE)?FALSE:TRUE;
 
@@ -568,7 +570,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(folderlist == FALSE){
 		isValid = FALSE;
-		printf("Failed FolderList validation\n");
+		//printf("Failed FolderList validation\n");
 		return isValid;
 	}
 
@@ -649,7 +651,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	if(capabilities == FALSE){
 		isValid = FALSE;
-		printf("Failed Capabilites validation\n");
+		//printf("Failed Capabilites validation\n");
 		return isValid;
 	}
 
