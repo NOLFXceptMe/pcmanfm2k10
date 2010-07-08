@@ -29,6 +29,9 @@ struct _FmProfileEntry {
 	gchar *executeas;		/* string, not reqd */
 
 	FmConditions *conditions;
+
+	/* NOTE: This is an array of GStrings. */
+	GPtrArray *exec_list;
 };
 
 struct _FmActionEntry {
@@ -83,6 +86,9 @@ struct _FmConditions {
 	gchar **schemes;					/* strings list, not reqd */
 	gchar **folderlist;					/* strings list, not reqd */
 	gchar **capabilities;				/* strings list, not reqd */
+
+	/* NOTE: This is an array of GStrings. */
+	GPtrArray *tryexec_list, *reg_list, *true_list, *running_list;
 };
 
 struct _FmDesktopEntry {

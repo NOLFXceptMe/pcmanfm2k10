@@ -74,6 +74,8 @@ void validate_profile(gpointer key, gpointer value, gpointer user_data)
 		printf("[FAIL]\n");
 	}
 	printf("\n");
+
+	g_free(id);
 }
 
 /* Validate a single action and add to valid_actions_array */
@@ -94,6 +96,8 @@ void validate_action(gpointer key, gpointer value, gpointer user_data)
 		for(i=0;i<action->n_profiles;++i){
 			printf("Trying to find profile %s in validated profiles\t", action->profiles[i]);
 			for(j=0;j<valid_profiles_array->len;++j){
+				if(action->profiles[i] == NULL)
+					printf("Action %s, Profile %d is NULL\n", name, i);
 				if(g_strcmp0(g_strstrip(action->profiles[i]), g_strstrip(((FmProfileEntry *)g_ptr_array_index(valid_profiles_array, j))->id)) == 0){
 					printf("1: [OK]\n");
 					//printf("%s is a valid action\n", name);
@@ -129,6 +133,8 @@ void validate_menu(gpointer key, gpointer value, gpointer user_data)
 		for(i=0; i<menu->n_itemslist; ++i){
 			printf("Trying to find action %s in validated actions\t", menu->itemslist[i]);
 			for(j=0; j<valid_actions_array->len; ++j){
+				if(menu->itemslist[i] == NULL)
+					printf("Menu %s, item %d is NULL\n", name, i);
 				if(g_strcmp0(g_strstrip(menu->itemslist[i]), g_strstrip(((FmActionEntry *)g_ptr_array_index(valid_actions_array, j))->name)) == 0){
 					printf("1: [OK]\n");
 					printf("%s is a valid action\n", name);
@@ -185,9 +191,15 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* TryExec validation */
+	/* FIXME: This is broken. */
+	/* TODO: Parameter expansion */
 	if(conditions->tryexec != NULL){
-		if(!(g_file_test(conditions->tryexec, G_FILE_TEST_EXISTS) == TRUE && g_file_test(conditions->tryexec, G_FILE_TEST_IS_EXECUTABLE) == TRUE))
-			tryexec = FALSE;
+		/* Extract the first word of it */
+		if(g_strstrip(conditions->tryexec)[0] == '/'){				/* Absolute path */
+			if(!(g_file_test(conditions->tryexec, G_FILE_TEST_EXISTS) == TRUE && g_file_test(conditions->tryexec, G_FILE_TEST_IS_EXECUTABLE) == TRUE))
+				tryexec = FALSE;
+		} else {											/* Just a file name */
+		}
 	}
 
 	if(tryexec == FALSE){
@@ -198,6 +210,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* ShowIfRegistered validation */
 	/* TODO: How do I access D-Bus using Glib? */
+	/* TODO: Parameter expansion */
 
 	if(showifregistered == FALSE){
 		isValid = FALSE;
@@ -207,6 +220,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* ShowIfTrue validation */
 	/* TODO: Used popen, should that be fine? */
+	/* TODO: Parameter expansion */
 	if(conditions->showiftrue != NULL){
 		showiftrue = FALSE;
 		fp = popen(conditions->showiftrue, "r");
@@ -228,6 +242,7 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* ShowIfRunning validation */
 	/* We use popen() and pgrep here */
+	/* TODO: Parameter expansion */
 	if(conditions->showifrunning != NULL){
 		fp = popen(g_strconcat("pgrep ", conditions->showifrunning, NULL), "r");
 		memset(line, 255, 0);

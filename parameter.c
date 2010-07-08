@@ -16,13 +16,20 @@ gchar *get_user_name(FmFileInfo *file_info);
 gchar *get_port(FmFileInfo *file_info);
 gchar *get_scheme(FmFileInfo *file_info);
 
+/* NOTE: Sticking to natural behavior of returning a list with the unchanged input_string, incase nothing can be substituted, however, this is expensive. A better way would be to return NULL incase of no changes, and let the caller handle the NULL case, which implies that there is no change in the input_string */
 GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_list)
 {
+	//printf("Input string is %s\n", input_string);
+	GPtrArray *out_string_array = g_ptr_array_new();
+	if(strchr(input_string, '%') == NULL){
+		//printf("Found nothing to expand. Returning input_string.\n");
+		g_ptr_array_add(out_string_array, g_string_new(input_string));
+		return out_string_array;
+	}
+
 	gsize i, j;
 	gsize len_file_list = fm_list_get_length(file_info_list);
-	GPtrArray *out_string_array = g_ptr_array_new();
 	GString *out_string = g_string_new(NULL);
-	//gchar *temp_string = NULL;
 	gsize first_pos = strcspn(input_string, "%");
 	gchar *pos = input_string + first_pos;
 	g_string_append_len(out_string, input_string, first_pos);

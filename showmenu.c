@@ -20,6 +20,7 @@
 #include "parser.h"
 #include "validation.h"
 #include "parameter.h"
+#include "substitution.h"
 
 void print_file_info(gpointer, gpointer);
 //void add_to_file_info_list(gpointer data, gpointer user_data);
@@ -37,6 +38,11 @@ GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL, *s
 
 int main(int argc, char *argv[])
 {
+	if(argc<2){
+		fprintf(stderr, "Usage: ./showmenu <filename>");
+		return -1;
+	}
+
 	g_type_init();
 	fm_init(NULL);
 
@@ -48,6 +54,10 @@ int main(int argc, char *argv[])
 	GHashTable *fmProfiles, *fmActions, *fmMenus;
 
 	FmDesktopEntry *desktop_entry = parse(argv[1]);
+	if(desktop_entry == NULL){
+		fprintf(stderr, "Failed to open %s\n", argv[1]);
+		return -1;
+	}
 
 	fmProfileEntries = desktop_entry->fmProfileEntries;
 	fmActionEntries = desktop_entry->fmActionEntries;
@@ -81,41 +91,21 @@ int main(int argc, char *argv[])
 	/* Environment: LXDE
 	 */
 	/* Make entries into the path_list, manually */
-	//path_list = fm_path_list_new_from_uris((const char **)uris);
 	FmPathList *path_list = fm_path_list_new();
-	/*
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.h"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/README"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/showmenu.c"));
-	*/
-	/*
-	 * "examples" is a directory, and "home" is a link, both of them have the mime type inode/directory */
-	/*
+	/* "examples" is a directory, and "home" is a link, both of them have the mime type inode/directory */
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
-	*/
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Einstein_german.ogg"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Roggan.mp3"));
-	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/action"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/action"));
+	fm_list_push_tail(path_list, fm_path_new("http://localhost:8000/README"));
 	
 	/* Make a list of file infos from the path_list */
 	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
 	FmJob *job = fm_file_info_job_new(path_list, FM_FILE_INFO_JOB_NONE);
 	fm_job_run_sync(job);
 	FmFileInfoList *file_info_list = ((FmFileInfoJob *)job)->file_infos;
-
-	/* If fm_file_info_job_new() doesn't work for some reason, manually enter the file infos into the file_info_list */
-	//FmFileInfo *file_info = NULL;
-	//fm_list_foreach(path_list, add_to_file_info_list, file_info_list);
-	
-	/*
-	if(file_info_list){
-		printf("Have %d files selected\n", fm_list_get_length(file_info_list));
-		fm_list_foreach(file_info_list, print_file_info, NULL);
-	}
-	*/
 
 	/* Now evaluate other data depending on the files_selected */
 	selection_count = fm_list_get_length(file_info_list);
@@ -126,7 +116,13 @@ int main(int argc, char *argv[])
 	fm_list_foreach(file_info_list, add_to_folders, folder_array);
 	/* Pre-processing done */
 
+	/* Substitute parameters */
+
 	/* Validate profiles */
+	g_hash_table_foreach(fmProfiles, substitute_profile_params, file_info_list);
+	g_hash_table_foreach(fmActions, substitute_action_params, file_info_list);
+	g_hash_table_foreach(fmMenus, substitute_menu_params, file_info_list);
+
 	GPtrArray *valid_profiles = retrieve_valid_profiles(fmProfiles);
 	for(i=0;i<valid_profiles->len;++i){
 		fmProfileEntry = g_ptr_array_index(valid_profiles, i);

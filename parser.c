@@ -14,7 +14,12 @@
 
 FmDesktopEntry* parse(gchar* file_name)
 {
-	gchar *desktop_file_id = g_strndup(file_name, strlen(file_name) - strlen(strrchr(file_name, '.')));
+	gchar *ext_pos = strrchr(file_name, '.');
+	if(ext_pos == NULL){
+		fprintf(stderr, "PARSER:: Invalid file type\n");
+		return NULL;
+	}
+	gchar *desktop_file_id = g_strndup(file_name, strlen(file_name) - strlen(ext_pos));
 
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;
@@ -34,7 +39,7 @@ FmDesktopEntry* parse(gchar* file_name)
 	flags = G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS;
 
 	if(!g_key_file_load_from_file(keyfile, file_name, flags, &error)){
-		fprintf(stderr, "%s\n", error->message);
+		fprintf(stderr, "PARSER:: %s\n", error->message);
 		return NULL;
 	}
 
