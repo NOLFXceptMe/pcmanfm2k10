@@ -67,9 +67,8 @@ void substitute_action_params(gpointer key, gpointer value, gpointer user_data)
 	}
 
 	for(i=0; i<action->n_profiles; ++i){
-		printf("Expanding %s ", action->profiles[i]);
+		//printf("Expanding %s ", action->profiles[i]);
 		profiles_sub = substitute_parameters(action->profiles[i], file_info_list);
-		printf("to %s\n", (char *)((GString *)g_ptr_array_index(profiles_sub, 0))->str);
 		g_free(action->profiles[i]);
 		action->profiles[i] = g_strdup(((GString *)g_ptr_array_index(profiles_sub, 0))->str);
 		//printf("to %s\n", action->profiles[i]);

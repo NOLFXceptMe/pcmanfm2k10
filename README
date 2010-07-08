@@ -33,4 +33,19 @@ DONE: Capabilities
 
 - Implementation of Parameter support 
 -------------------------------------
-(*)TODO: Parameter substitution at runtime [hard?]
+DONE: Parameter substitution at runtime (except for %d and %D)
+
+TODO for 8th July
+-----------------
+Fix implementations
+
+- Basenames
+- Parameters %d and %D
+- Parameters %b and %B, %f and %F
+- TryExec (if possible)
+- Make showmenu accept multiple files OR make it a module, and have a higher up collect the results. Recommend the former.
+
+TODO for 9th July
+-----------------
+- Test with multiple desktop files
+- Create a console program that can show these results, finalize output. [v0.1 for midterm evaluation?]
