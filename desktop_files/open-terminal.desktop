@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name = Open terminal here
+Tooltip = Open a new terminal here
+Icon = terminal
+Profiles = on_folder; on_file; on_desktop;
+
+[X-Action-Profile on_file]
+Name = open a terminal in the folder which contains selected items
+MimeTypes = all/allfiles;
+Exec = gnome-terminal --working-directory=$(echo %D | cut -d' ' -f1)
+
+[X-Action-Profile on_desktop]
+Name = open a terminal of the desktop
+Schemes = x-nautilus-desktop;
+ShowIfRunning = firefox
+Exec = gnome-terminal --working-directory=~/Desktop

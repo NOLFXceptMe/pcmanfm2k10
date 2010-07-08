@@ -1,0 +1,26 @@
+# This is an example of a key-value file
+
+[username]
+
+Name = Foundations of GTK+ Development
+
+# A list of strings that are localized
+Hi=Hello
+Hi[fr]=Bonjour
+Hi[de]=Hallo
+Hi[es]=Hola
+
+Bool=true;true;false
+Nums=1;1;2;3;5;8
+Strings=One;One;Two;Three;Five;Eight
+Int=42
+Doubles=0.0;1.0;50.4
+
+[Desktop Entry]
+Name=MultiProxy
+Exec=env WINEPREFIX="/home/npower/.wine" wine "C:\\Program Files\\MultiProxy\\mproxy.exe" 
+Type=Application
+StartupNotify=true
+Comment=MultiProxy personal server
+Path=/home/npower/.wine/dosdevices/c:/Program Files/MultiProxy
+Icon=/home/npower/.local/share/icons/89c7_mproxy.0.xpm

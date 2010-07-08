@@ -8,6 +8,8 @@
 
 #define DESKTOP_FILES_FOLDER "/home/npower/.config/GSOC/"
 
+/* For testers, move the files in desktop_files folder in the current git repo to wherever and modify the above string */
+
 GPtrArray* showmenu(GPtrArray *desktop_files_array);
 
 int main()
