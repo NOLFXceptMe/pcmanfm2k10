@@ -1,8 +1,8 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
-#include<string.h>
-#include<glib.h>
+#include <string.h>
+#include <glib.h>
 
 #define UNKNOWN_ENTRY		1
 #define ACTION_ENTRY		1<<1

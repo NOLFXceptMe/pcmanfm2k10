@@ -4,17 +4,12 @@
 
 /* TODO: Parsing URIs is a pain. Especially for host name, and port. A better way to do is split according to the grammar of RFC 3986. Later */
 
-#include<glib.h>
-#include<string.h>
+#include <glib.h>
+#include <string.h>
 
-#include<libfm/fm-file-info.h>
+#include <libfm/fm-file-info.h>
 
-void print_gstring(gpointer data, gpointer user_data);
-
-gchar *get_host_name(FmFileInfo *file_info);
-gchar *get_user_name(FmFileInfo *file_info);
-gchar *get_port(FmFileInfo *file_info);
-gchar *get_scheme(FmFileInfo *file_info);
+#include "parameter.h"
 
 /* NOTE: Sticking to natural behavior of returning a list with the unchanged input_string, incase nothing can be substituted, however, this is expensive. A better way would be to return NULL incase of no changes, and let the caller handle the NULL case, which implies that there is no change in the input_string */
 GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_list)

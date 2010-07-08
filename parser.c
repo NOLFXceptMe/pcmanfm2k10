@@ -8,8 +8,9 @@
  *
  */
 
-#include<stdio.h>
-#include<glib.h>
+#include <stdio.h>
+#include <glib.h>
+
 #include "parser.h"
 
 FmDesktopEntry* parse(gchar* file_name)
@@ -69,12 +70,8 @@ FmDesktopEntry* parse(gchar* file_name)
 		//printf("Name of the group is %s\n", group_names[i]);
 #endif
 
-		/* Action entry or Menu entry
-		 * Also have one issue to be clarified on XDG mailing list
-		 * - Keys and values are mentioned to be case sensitive
-		 * - Nothing as such is given for group headers. So, is "desktop Entry", the same as "Desktop Entry"?
-		 * For now assuming that group headers are case insensitive, hence using g_ascii_strcasecmp().  If case sensitive, shift to g_strcmp0() */
-		if(g_ascii_strcasecmp(group_names[i], "Desktop Entry") == 0){
+		/* Action entry or Menu entry */
+		if(g_strcmp0(group_names[i], "Desktop Entry") == 0){
 			type_string = g_key_file_get_string(keyfile, group_names[i], "Type", NULL);
 
 			if(type_string == NULL || g_strcmp0(type_string, "Action") == 0){
@@ -123,34 +120,15 @@ FmDesktopEntry* parse(gchar* file_name)
 				fmDesktopEntry->n_profile_entries++;
 				g_ptr_array_add(fmDesktopEntry->fmProfileEntries, (gpointer) fmProfileEntry);
 			}
+			g_free(profile_id);
 		} 
 		
 		else {
 			type = UNKNOWN_ENTRY;
 		}
-		
-#ifndef NDEBUG
-		/*
-		switch(type){
-			case ACTION_ENTRY:
-				printf("Action Entry\n");
-				break;
-			case MENU_ENTRY:
-				printf("Menu Entry\n");
-				break;
-			case PROFILE_ENTRY:
-				printf("Profile Entry with profile_id %s\n", profile_id);
-				break;
-			case UNKNOWN_ENTRY:
-				printf("Unknown Entry\n");
-				break;
-			default:
-				break;
-		};
-		*/
-#endif
 	}
 
+	g_free(desktop_file_id);
 	//printf("Parsed %s\n", file_name);
 	return fmDesktopEntry;
 }
@@ -163,6 +141,7 @@ FmActionEntry* parse_action_entry(GKeyFile *keyfile, gchar *group_name)
 	/* TODO: We have a problem here with parsing locale strings */
 	ae->name = g_key_file_get_locale_string(keyfile, group_name, "Name", "en_US.UTF-8", &error);
 	if(ae->name == NULL){
+		fprintf(stderr, "Can't find name for Action Entry\n");
 #ifndef NDEBUG
 		fprintf(stderr, "%s\n", error->message);
 #endif
@@ -197,6 +176,7 @@ FmProfileEntry* parse_profile_entry(GKeyFile *keyfile, gchar *group_name)
 
 	pe->exec = g_key_file_get_string(keyfile, group_name, "Exec", &error);
 	if(pe->exec == NULL){
+		fprintf(stderr, "Cannot find Exec key for Profile Entry\n");
 #ifndef NDEBUG
 		fprintf(stderr, "%s\n", error->message);
 #endif
@@ -220,13 +200,23 @@ FmMenuEntry* parse_menu_entry(GKeyFile *keyfile, gchar *group_name)
 
 	me->type = g_key_file_get_string(keyfile, group_name, "Type", &error);
 	if(me->type == NULL || g_ascii_strcasecmp(me->type, "Menu") != 0){
+		fprintf(stderr, "Cannot find valid type for Menu\n");
 #ifndef NDEBUG
 		fprintf(stderr, "%s\n", error->message);
 #endif
+		g_error_free(error);
 		return NULL;
 	}
 
-	me->name = g_key_file_get_locale_string(keyfile, group_name, "Name", NULL, NULL);
+	me->name = g_key_file_get_locale_string(keyfile, group_name, "Name", NULL, &error);
+	if(me->name == NULL){
+		fprintf(stderr, "Cannot find name for Menu\n");
+#ifndef NDEBUG
+		fprintf(stderr, "%s\n", error->message);
+#endif
+		g_error_free(error);
+		return NULL;
+	}
 	me->tooltip = g_key_file_get_locale_string(keyfile, group_name, "Tooltip", NULL, NULL);
 	me->icon = g_key_file_get_locale_string(keyfile, group_name, "Icon", NULL, NULL);
 	me->description = g_key_file_get_locale_string(keyfile, group_name, "Description", NULL, NULL);

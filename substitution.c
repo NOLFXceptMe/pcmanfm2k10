@@ -1,5 +1,5 @@
-#include<glib.h>
-#include<libfm/fm-file-info.h>
+#include <glib.h>
+#include <libfm/fm-file-info.h>
 
 #include "parser.h"
 #include "parameter.h"

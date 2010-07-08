@@ -1,15 +1,15 @@
-#include<glib.h>
-#include<glib/gstdio.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<unistd.h>
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "parser.h"
 #include "validation.h"
 
 extern gchar *environment;
 extern gsize selection_count;
-extern GPtrArray *mime_types, *base_names, *capabilities_array, *schemes_array, *folder_array;
+extern GPtrArray *mime_types, *base_names, *capabilities_array, *schemes_array;
 typedef struct _valid_arrays_type valid_arrays_type;
 struct _valid_arrays_type {
 	GPtrArray *profile_array;
@@ -37,6 +37,7 @@ GPtrArray* retrieve_valid_actions(GHashTable *fmActions, GPtrArray *valid_profil
 	valid_arrays_temp->menu_array = NULL;
 
 	g_hash_table_foreach(fmActions, (GHFunc) validate_action, valid_arrays_temp);
+	g_free(valid_arrays_temp);
 
 	return valid_actions_array;
 }
@@ -52,6 +53,7 @@ GPtrArray* retrieve_valid_menus(GHashTable *fmMenus, GPtrArray *valid_actions)
 	valid_arrays_temp->menu_array = valid_menus_array;
 
 	g_hash_table_foreach(fmMenus, (GHFunc) validate_menu, valid_arrays_temp);
+	g_free(valid_arrays_temp);
 
 	return valid_menus_array;
 }
@@ -81,7 +83,7 @@ void validate_profile(gpointer key, gpointer value, gpointer user_data)
 /* Validate a single action and add to valid_actions_array */
 void validate_action(gpointer key, gpointer value, gpointer user_data)
 {
-	gchar *name = g_strdup(key);
+	//gchar *name = g_strdup(key);
 	FmActionEntry *action = (FmActionEntry *)value;
 	valid_arrays_type *valid_arrays = (valid_arrays_type *)user_data;
 	GPtrArray *valid_profiles_array = valid_arrays->profile_array;
@@ -113,12 +115,14 @@ void validate_action(gpointer key, gpointer value, gpointer user_data)
 		//printf("[FAIL]: Conditions not satisfied\n");
 	}
 	//printf("\n");
+	
+	//g_free(name);
 }
 
 /* Validate a single menu item and add to valid_menus_array */
 void validate_menu(gpointer key, gpointer value, gpointer user_data)
 {
-	gchar *name = g_strdup(key);
+	//gchar *name = g_strdup(key);
 	FmMenuEntry *menu = (FmMenuEntry *)value;
 	valid_arrays_type *valid_arrays = (valid_arrays_type *)user_data;
 	GPtrArray *valid_actions_array = valid_arrays->action_array;
@@ -150,6 +154,8 @@ void validate_menu(gpointer key, gpointer value, gpointer user_data)
 	} else {
 		//printf("[FAIL]: Conditions not satisfied\n");
 	}
+
+	//g_free(name);
 }
 
 gboolean validate_conditions(FmConditions *conditions)
@@ -194,7 +200,6 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* TryExec validation */
 	/* FIXME: This is broken. */
-	/* TODO: Parameter expansion */
 	if(conditions->tryexec != NULL){
 		/* Extract the first word of it */
 		if(g_strstrip(conditions->tryexec)[0] == '/'){				/* Absolute path */
@@ -212,7 +217,6 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* ShowIfRegistered validation */
 	/* TODO: How do I access D-Bus using Glib? */
-	/* TODO: Parameter expansion */
 
 	if(showifregistered == FALSE){
 		isValid = FALSE;
@@ -222,7 +226,6 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* ShowIfTrue validation */
 	/* TODO: Used popen, should that be fine? */
-	/* TODO: Parameter expansion */
 	if(conditions->showiftrue != NULL){
 		showiftrue = FALSE;
 		fp = popen(conditions->showiftrue, "r");
@@ -244,14 +247,17 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* ShowIfRunning validation */
 	/* We use popen() and pgrep here */
-	/* TODO: Parameter expansion */
+	gchar *pgrep_str = NULL;
 	if(conditions->showifrunning != NULL){
-		fp = popen(g_strconcat("pgrep ", conditions->showifrunning, NULL), "r");
+		pgrep_str = g_strconcat("pgrep ", conditions->showifrunning, NULL);
+		fp = popen(pgrep_str, "r");
 		memset(line, 255, 0);
 		fgets(line, 255, fp);
 		if(g_strcmp0(g_strstrip(line), "") == 0){
 			showifrunning = FALSE;
 		}
+		pclose(fp);
+		g_free(pgrep_str);
 	}
 	
 	if(showifrunning == FALSE){
@@ -486,7 +492,9 @@ gboolean validate_conditions(FmConditions *conditions)
 				break;
 			default:
 				selectioncount = TRUE;
+				break;
 		}
+		g_free(selection_count_string);
 	}
 
 	if(selectioncount == FALSE){
@@ -540,6 +548,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	gchar current_directory[1024];
 
 	if(conditions->n_folderlist >= 0){
+		memset(current_directory, 1024, 0);
 		getcwd(current_directory, 1024);
 
 		for(i=0; i<conditions->n_folderlist; ++i){				/* First Pass: Iterate over the folder list, to find if our current directory lies in any of them */
@@ -699,6 +708,9 @@ gboolean match_folder_pair(gchar *folderlist_i, gchar *cwd)
 
 		++level_i, ++level_j;
 	}
+
+	g_strfreev(folder_split_i);
+	g_strfreev(cwd_split);
 
 	return folderlist;
 }

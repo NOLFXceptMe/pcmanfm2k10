@@ -5,47 +5,26 @@
  * Test code, to simulate a rightclick for the sake of displaying a menu. Instead of showing up a graphical menu, this will write to stdout
  */
 
-#include<glib.h>
-#include<glib/gstdio.h>
-#include<stdio.h>
-#include<features.h>
-#include<stdlib.h>
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <stdio.h>
+#include <features.h>
+#include <stdlib.h>
 
-#include<libfm/fm.h>
-#include<libfm/fm-file-info.h>
-#include<libfm/fm-file-info-job.h>
-#include<libfm/fm-path.h>
-#include<libfm/fm-list.h>
+#include <libfm/fm.h>
+#include <libfm/fm-file-info.h>
+#include <libfm/fm-file-info-job.h>
+#include <libfm/fm-path.h>
+#include <libfm/fm-list.h>
 
+#include "showmenu.h"
 #include "parser.h"
 #include "validation.h"
 #include "parameter.h"
 #include "substitution.h"
 
-void print_file_info(gpointer, gpointer);
-//void add_to_file_info_list(gpointer data, gpointer user_data);
-void print_base_names(gpointer data, gpointer user_data);
-
-void add_to_mime_types(gpointer data, gpointer user_data);
-void add_to_base_names(gpointer data, gpointer user_data);
-void add_to_capabilities(gpointer data, gpointer user_data);
-void add_to_schemes(gpointer data, gpointer user_data);
-void add_to_folders(gpointer data, gpointer user_data);
-
-gchar *environment = "LXDE";
-gsize selection_count = 0;
-GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL, *schemes_array = NULL, *folder_array = NULL;
-
-//int main(int argc, char *argv[])
 GPtrArray* showmenu(GPtrArray *desktop_files_array)
 {
-	/*
-	if(argc<2){
-		fprintf(stderr, "Usage: ./showmenu <filename>");
-		return -1;
-	}
-	*/
-
 	g_type_init();
 	fm_init(NULL);
 
@@ -65,15 +44,7 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	capabilities_array = g_ptr_array_new();
 	schemes_array = g_ptr_array_new();
 
-	//FmDesktopEntry *desktop_entry = parse(argv[1]);
 	FmDesktopEntry *desktop_entry = NULL;
-
-	/*
-	if(desktop_entry == NULL){
-		fprintf(stderr, "Failed to open %s\n", argv[1]);
-		return -1;
-	}
-	*/
 
 	for(j=0; j<desktop_files_array->len; ++j){
 		desktop_entry = parse((gchar *)g_ptr_array_index(desktop_files_array, j));
@@ -113,7 +84,6 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	//fm_list_push_tail(path_list, fm_path_new("http://localhost:8000/README"));
 	
 	/* Make a list of file infos from the path_list */
-	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
 	FmJob *job = fm_file_info_job_new(path_list, FM_FILE_INFO_JOB_NONE);
 	fm_job_run_sync(job);
 	FmFileInfoList *file_info_list = ((FmFileInfoJob *)job)->file_infos;
@@ -124,16 +94,14 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	fm_list_foreach(file_info_list, add_to_base_names, base_names);
 	fm_list_foreach(file_info_list, add_to_capabilities, capabilities_array);
 	fm_list_foreach(file_info_list, add_to_schemes, schemes_array);
-	fm_list_foreach(file_info_list, add_to_folders, folder_array);
 	/* Pre-processing done */
 
 	/* Substitute parameters */
-
-	/* Validate profiles */
 	g_hash_table_foreach(fmProfiles, substitute_profile_params, file_info_list);
 	g_hash_table_foreach(fmActions, substitute_action_params, file_info_list);
 	g_hash_table_foreach(fmMenus, substitute_menu_params, file_info_list);
 
+	/* Validate profiles */
 	GPtrArray *valid_profiles = retrieve_valid_profiles(fmProfiles);
 	for(i=0;i<valid_profiles->len;++i){
 		fmProfileEntry = g_ptr_array_index(valid_profiles, i);
@@ -143,11 +111,9 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 
 	/* Validate actions */
 	GPtrArray *valid_actions = retrieve_valid_actions(fmActions, valid_profiles);
-	//GPtrArray *valid_actions_names = g_ptr_array_new();
 	for(i=0;i<valid_actions->len;++i){
 		fmActionEntry = g_ptr_array_index(valid_actions, i);
 		//printf("%s is a valid action\n\n", fmActionEntry->id);
-		//g_ptr_array_add(valid_actions_names, fmActionEntry->id);
 	}
 
 	/* Validate menus */
@@ -157,28 +123,18 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 		printf("%s is a valid menu\n\n", fmMenuEntry->id);
 	}
 
-	/* Show context menu */
-	/* Context menu will show valid actions and menus */
+	g_ptr_array_free(mime_types, TRUE);
+	g_ptr_array_free(base_names, TRUE);
+	g_ptr_array_free(capabilities_array, TRUE);
+	g_ptr_array_free(schemes_array, TRUE);
 
-	//return 0;
-	//return valid_actions_names;
+	g_hash_table_destroy(fmProfiles);
+	g_hash_table_destroy(fmActions);
+	g_hash_table_destroy(fmMenus);
+
+	/* Return valid actions */
 	return valid_actions;
 }
-
-/*
-void add_to_file_info_list(gpointer data, gpointer user_data)
-{
-	FmPath *path = (FmPath *)data;
-	FmFileInfoList *file_info_list = (FmFileInfoList *)user_data;
-	GFile *file = fm_path_to_gfile(path);
-	GFileInfo *info = g_file_query_info(file, "standard::*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
-	FmFileInfo *fi = fm_file_info_new();
-	fi->path = fm_path_new("");
-	fm_file_info_set_from_gfileinfo(fi, info);
-
-	fm_list_push_tail(file_info_list, fi);
-}
-*/
 
 void print_file_info(gpointer data, gpointer user_data)
 {
@@ -265,11 +221,4 @@ void add_to_schemes(gpointer data, gpointer user_data)
 
 	g_ptr_array_add(schemes_array, (gpointer) scheme);
 	g_free(uri);
-}
-
-void add_to_folders(gpointer data, gpointer user_data)
-{
-	//FmFileInfo *fi = (FmFileInfo *)data;
-	//GPtrArray *folders_array = (GPtrArray *)user_data;
-
 }
