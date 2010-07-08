@@ -36,12 +36,15 @@ gchar *environment = "LXDE";
 gsize selection_count = 0;
 GPtrArray *mime_types = NULL, *base_names = NULL, *capabilities_array = NULL, *schemes_array = NULL, *folder_array = NULL;
 
-int main(int argc, char *argv[])
+//int main(int argc, char *argv[])
+GPtrArray* showmenu(GPtrArray *desktop_files_array)
 {
+	/*
 	if(argc<2){
 		fprintf(stderr, "Usage: ./showmenu <filename>");
 		return -1;
 	}
+	*/
 
 	g_type_init();
 	fm_init(NULL);
@@ -53,16 +56,6 @@ int main(int argc, char *argv[])
 	GPtrArray *fmProfileEntries, *fmActionEntries, *fmMenuEntries;
 	GHashTable *fmProfiles, *fmActions, *fmMenus;
 
-	FmDesktopEntry *desktop_entry = parse(argv[1]);
-	if(desktop_entry == NULL){
-		fprintf(stderr, "Failed to open %s\n", argv[1]);
-		return -1;
-	}
-
-	fmProfileEntries = desktop_entry->fmProfileEntries;
-	fmActionEntries = desktop_entry->fmActionEntries;
-	fmMenuEntries = desktop_entry->fmMenuEntries;
-
 	fmProfiles = g_hash_table_new(NULL, NULL);
 	fmActions = g_hash_table_new(NULL, NULL);
 	fmMenus = g_hash_table_new(NULL, NULL);
@@ -72,19 +65,37 @@ int main(int argc, char *argv[])
 	capabilities_array = g_ptr_array_new();
 	schemes_array = g_ptr_array_new();
 
-	for(i=0;i<desktop_entry->n_profile_entries;++i){
-		fmProfileEntry = g_ptr_array_index(fmProfileEntries, i);
-		g_hash_table_insert(fmProfiles, fmProfileEntry->id, fmProfileEntry);
-	}
+	//FmDesktopEntry *desktop_entry = parse(argv[1]);
+	FmDesktopEntry *desktop_entry = NULL;
 
-	for(i=0;i<desktop_entry->n_action_entries;++i){
-		fmActionEntry = g_ptr_array_index(fmActionEntries, i);
-		g_hash_table_insert(fmActions, fmActionEntry->name, fmActionEntry);
+	/*
+	if(desktop_entry == NULL){
+		fprintf(stderr, "Failed to open %s\n", argv[1]);
+		return -1;
 	}
+	*/
 
-	for(i=0;i<desktop_entry->n_menu_entries;++i){
-		fmMenuEntry = g_ptr_array_index(fmMenuEntries, i);
-		g_hash_table_insert(fmMenus, fmMenuEntry->name, fmMenuEntry);
+	for(i=0; i<desktop_files_array->len; ++i){
+		desktop_entry = parse((gchar *)g_ptr_array_index(desktop_files_array, i));
+
+		fmProfileEntries = desktop_entry->fmProfileEntries;
+		fmActionEntries = desktop_entry->fmActionEntries;
+		fmMenuEntries = desktop_entry->fmMenuEntries;
+
+		for(i=0;i<desktop_entry->n_profile_entries;++i){
+			fmProfileEntry = g_ptr_array_index(fmProfileEntries, i);
+			g_hash_table_insert(fmProfiles, fmProfileEntry->id, fmProfileEntry);
+		}
+
+		for(i=0;i<desktop_entry->n_action_entries;++i){
+			fmActionEntry = g_ptr_array_index(fmActionEntries, i);
+			g_hash_table_insert(fmActions, fmActionEntry->name, fmActionEntry);
+		}
+
+		for(i=0;i<desktop_entry->n_menu_entries;++i){
+			fmMenuEntry = g_ptr_array_index(fmMenuEntries, i);
+			g_hash_table_insert(fmMenus, fmMenuEntry->name, fmMenuEntry);
+		}
 	}
 
 	/* Set some base conditions */
@@ -93,13 +104,13 @@ int main(int argc, char *argv[])
 	/* Make entries into the path_list, manually */
 	FmPathList *path_list = fm_path_list_new();
 	/* "examples" is a directory, and "home" is a link, both of them have the mime type inode/directory */
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Einstein_german.ogg"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Roggan.mp3"));
-	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/action"));
-	fm_list_push_tail(path_list, fm_path_new("http://localhost:8000/README"));
+	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/action"));
+	//fm_list_push_tail(path_list, fm_path_new("http://localhost:8000/README"));
 	
 	/* Make a list of file infos from the path_list */
 	/* I can't get to use fm_file_info_job_new(), for some reason, it does not fill in the file info data structures */
@@ -132,22 +143,26 @@ int main(int argc, char *argv[])
 
 	/* Validate actions */
 	GPtrArray *valid_actions = retrieve_valid_actions(fmActions, valid_profiles);
+	//GPtrArray *valid_actions_names = g_ptr_array_new();
 	for(i=0;i<valid_actions->len;++i){
 		fmActionEntry = g_ptr_array_index(valid_actions, i);
-		printf("%s is a valid action\n", fmActionEntry->name);
+		//printf("%s is a valid action\n", fmActionEntry->name);
+		//g_ptr_array_add(valid_actions_names, fmActionEntry->id);
 	}
 
 	/* Validate menus */
 	GPtrArray *valid_menus = retrieve_valid_menus(fmMenus, valid_actions);
 	for(i=0;i<valid_menus->len;++i){
 		fmMenuEntry = g_ptr_array_index(valid_menus, i);
-		printf("%s is a valid menu\n", fmMenuEntry->name);
+		printf("%s is a valid menu\n", fmMenuEntry->id);
 	}
 
 	/* Show context menu */
 	/* Context menu will show valid actions and menus */
 
-	return 0;
+	//return 0;
+	//return valid_actions_names;
+	return valid_actions;
 }
 
 /*
@@ -205,7 +220,7 @@ void add_to_base_names(gpointer data, gpointer user_data)
 	gchar *display_name = (gchar *)fm_file_info_get_disp_name(file_info);
 	gchar *base_name = g_strdup(display_name);
 
-	printf("Adding %s to base_names\n", base_name);
+	//printf("Adding %s to base_names\n", base_name);
 	g_ptr_array_add(base_names, (gpointer) base_name);
 }
 

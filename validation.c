@@ -135,9 +135,9 @@ void validate_menu(gpointer key, gpointer value, gpointer user_data)
 			for(j=0; j<valid_actions_array->len; ++j){
 				if(menu->itemslist[i] == NULL)
 					printf("Menu %s, item %d is NULL\n", name, i);
-				if(g_strcmp0(g_strstrip(menu->itemslist[i]), g_strstrip(((FmActionEntry *)g_ptr_array_index(valid_actions_array, j))->name)) == 0){
+				if(g_strcmp0(g_strstrip(menu->itemslist[i]), g_strstrip(((FmActionEntry *)g_ptr_array_index(valid_actions_array, j))->id)) == 0){
 					printf("1: [OK]\n");
-					printf("%s is a valid action\n", name);
+					//printf("%s is a valid action\n", name);
 					g_ptr_array_add(valid_menus_array, menu);
 					return;
 				}

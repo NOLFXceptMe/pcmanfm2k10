@@ -5,8 +5,8 @@ LD=gcc
 LDFLAGS+=`pkg-config --libs glib-2.0` `pkg-config --libs libfm` `pkg-config --libs gio-unix-2.0`
 
 INCLUDE=include/
-BIN=action profile parametertest showmenu
-OBJS=parser.o validation.o parameter.o substitution.o
+BIN=showmenutest
+OBJS=parser.o validation.o parameter.o substitution.o showmenu.o
 
 all: $(BIN)
 
@@ -20,7 +20,7 @@ parametertest: parameter.o
 
 validation.o: parser.o
 
-showmenu: $(OBJS)
+showmenutest: $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(BIN)
