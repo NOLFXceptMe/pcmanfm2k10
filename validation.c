@@ -436,10 +436,7 @@ gboolean validate_conditions(FmConditions *conditions)
 			
 			/* Iterate over the basenames of the selected items and validate */
 			for(j=0;j<base_names->len;++j){
-				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
-				if(casesensitive_base_regex == NULL || not_casesensitive_base_regex == NULL){
-					printf("1: Regexes are NULL\n");
-				}
+				//printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
 
 				if(matchcase == TRUE)
 					atleast_one_match = g_regex_match(casesensitive_base_regex, g_ptr_array_index(base_names, j), 0, NULL);
@@ -471,10 +468,7 @@ gboolean validate_conditions(FmConditions *conditions)
 			
 				/* Iterate over the basenames of the selected items and validate */
 				for(j=0;j<base_names->len;++j){
-					printf("Negation: Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
-					if(casesensitive_base_regex == NULL || not_casesensitive_base_regex == NULL){
-						printf("0: Regexes are NULL\n");
-					}
+					//printf("Negation: Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
 					
 					if(matchcase == TRUE)
 						atleast_one_negation = g_regex_match(casesensitive_base_regex, g_ptr_array_index(base_names, j), 0, NULL);
