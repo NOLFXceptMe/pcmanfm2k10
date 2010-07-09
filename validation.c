@@ -613,76 +613,74 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* Capabilities validation */
-	FmCapabilities fm_capability;
-	gboolean negate_capability;
-	//printf("\nHave %d capabilities to verify\n", conditions->n_capabilities);
+	FmCapabilities or_value, fmCapability;
+	FmCapabilities validate_cap = 0, negate_cap = 0;
+	gboolean negate_flag;
+	gsize offset;
 	if(conditions->n_capabilities> 0){
+		//printf("\nHave %d capabilities to verify\n", conditions->n_capabilities);
 		for(i=0; i<conditions->n_capabilities; ++i){			/* Iterate on capabilities */
+			negate_flag = FALSE;
+			offset = 0;
+			or_value = 0;
+
+			if(g_strstrip(conditions->capabilities[i])[0] == '!'){
+				negate_flag = TRUE;
+				offset = 1;
+			}
 			//printf("Capability %d: %s\n", i, conditions->capabilities[i]);
+
+			if(g_strcmp0(conditions->capabilities[i] + offset, "Owner") == 0)
+				or_value = FM_CAP_OWNER;
+
+			if(g_strcmp0(conditions->capabilities[i] + offset, "Readable") == 0)
+				or_value = FM_CAP_READABLE;
+
+			if(g_strcmp0(conditions->capabilities[i] + offset, "Writable") == 0)
+				or_value = FM_CAP_WRITABLE;
+
+			if(g_strcmp0(conditions->capabilities[i] + offset, "Executable") == 0)
+				or_value = FM_CAP_EXECUTABLE;
+
+			if(g_strcmp0(conditions->capabilities[i] + offset, "Local") == 0)
+				or_value = FM_CAP_LOCAL;
+
+			if(negate_flag == TRUE)
+				negate_cap |= or_value;
+			else
+				validate_cap |= or_value;
+		}
+	
+		//printf("Validate_cap = %d\n", validate_cap);
+		//printf("Negate_cap = %d\n", negate_cap);
+
+		/* Validation */
+		for(i=0;i<capabilities_array->len;++i){
 			if(capabilities == FALSE)
 				break;
-			negate_capability = FALSE;
-			if(g_strstrip(conditions->capabilities[i])[0] == '!'){
-				negate_capability = TRUE;
-				conditions->capabilities[i] = conditions->capabilities[i]+1;
-				/* Memory leak of 1 byte here? */
-			}
+			fmCapability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, i));
+			//printf("%d: ", fmCapability);
 
-			/* Owner */
-			if(g_strcmp0(conditions->capabilities[i], "Owner") == 0){
-				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
-					/* Using the XOR here */
-					if(!(((fm_capability & FM_CAP_OWNER)!=0) ^ (negate_capability == TRUE))){
-						capabilities = FALSE;
-						break;
-					}
-				}
-				continue;
+			if(((fmCapability & validate_cap)^validate_cap) != 0){
+				capabilities = FALSE;
+				//printf("Failed\n");
+			} else {
+				//printf("Validated\n");
 			}
+		}
 
-			if(g_strcmp0(conditions->capabilities[i], "Readable") == 0){
-				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
-					if(!(((fm_capability & FM_CAP_READABLE)!=0) ^ (negate_capability == TRUE))){
-						capabilities = FALSE;
-						break;
-					}
-				}
-				continue;
-			}
+		/* Negation */
+		for(i=0;i<capabilities_array->len;++i){
+			if(capabilities == FALSE)
+				break;
+			fmCapability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, i));
+			//printf("%d: ", fmCapability);
 
-			if(g_strcmp0(conditions->capabilities[i], "Writable") == 0){
-				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
-					if(!(((fm_capability & FM_CAP_WRITABLE)!=0) ^ (negate_capability == TRUE))){
-						capabilities = FALSE;
-						break;
-					}
-				}
-				continue;
-			}
-
-			if(g_strcmp0(conditions->capabilities[i], "Executable") == 0){
-				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
-					if(!(((fm_capability & FM_CAP_EXECUTABLE)!=0) ^ (negate_capability == TRUE))){
-						capabilities = FALSE;
-						break;
-					}
-				}
-				continue;
-			}
-
-			if(g_strcmp0(conditions->capabilities[i], "Local") == 0){
-				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
-					if(!(((fm_capability & FM_CAP_LOCAL)!=0) ^ (negate_capability == TRUE))){
-						capabilities = FALSE;
-						break;
-					}
-				}
-				continue;
+			if((fmCapability & negate_cap) != 0){
+				capabilities = FALSE;
+				//printf("Failed\n");
+			} else {
+				//printf("Validated\n");
 			}
 		}
 	}

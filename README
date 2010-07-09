@@ -21,7 +21,7 @@ Features tested
 - Implementation of Condition Validation
 ----------------------------------------
 DONE: OnlyShowIn, NotShowIn
-FIXME: TryExec
+DONE: TryExec
 TODO: ShowIfRegistered
 DONE: ShowIfTrue
 DONE: ShowIfRunning
