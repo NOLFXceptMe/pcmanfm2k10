@@ -402,15 +402,15 @@ gboolean validate_conditions(FmConditions *conditions)
 		/* Basenames validation */
 		/* Sanitize: Replace the '.' character with "\." and '*' with ".*", in that order*/
 		for(i=0; i<conditions->n_basenames; ++i){
-			conditions->basenames[i] = sanitize(conditions->basenames[i], ".", "\\.");
-			conditions->basenames[i] = sanitize(conditions->basenames[i], "*", ".*");
+			conditions->basenames[i] = prepare_for_regex_matching(conditions->basenames[i], ".", "\\.");
+			conditions->basenames[i] = prepare_for_regex_matching(conditions->basenames[i], "*", ".*");
 			//printf("%s\n", conditions->basenames[i]);
 		}
 
 		for(j=0; j<base_names->len; ++j){
 			base_name_j = (gchar *)g_ptr_array_index(base_names, j);
-			base_name_j = sanitize(base_name_j, ".", "\\.");
-			base_name_j = sanitize(base_name_j, "*", ".*");
+			base_name_j = prepare_for_regex_matching(base_name_j, ".", "\\.");
+			base_name_j = prepare_for_regex_matching(base_name_j, "*", ".*");
 			g_ptr_array_index(base_names, j) = base_name_j;
 			//printf("%s\n", (gchar *)g_ptr_array_index(base_names, j));
 		}
@@ -613,7 +613,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* Capabilities validation */
-	FmCapabilities *fm_capability = NULL;
+	FmCapabilities fm_capability;
 	gboolean negate_capability;
 	//printf("\nHave %d capabilities to verify\n", conditions->n_capabilities);
 	if(conditions->n_capabilities> 0){
@@ -622,7 +622,7 @@ gboolean validate_conditions(FmConditions *conditions)
 			if(capabilities == FALSE)
 				break;
 			negate_capability = FALSE;
-			if(conditions->capabilities[i][0] == '!'){
+			if(g_strstrip(conditions->capabilities[i])[0] == '!'){
 				negate_capability = TRUE;
 				conditions->capabilities[i] = conditions->capabilities[i]+1;
 				/* Memory leak of 1 byte here? */
@@ -631,9 +631,9 @@ gboolean validate_conditions(FmConditions *conditions)
 			/* Owner */
 			if(g_strcmp0(conditions->capabilities[i], "Owner") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
+					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
 					/* Using the XOR here */
-					if(!((fm_capability->isOwner == TRUE) ^ (negate_capability == TRUE))){
+					if(!(((fm_capability & FM_CAP_OWNER)!=0) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -643,8 +643,8 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			if(g_strcmp0(conditions->capabilities[i], "Readable") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(!((fm_capability->isReadable == TRUE) ^ (negate_capability == TRUE))){
+					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
+					if(!(((fm_capability & FM_CAP_READABLE)!=0) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -654,8 +654,8 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			if(g_strcmp0(conditions->capabilities[i], "Writable") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(!((fm_capability->isWritable == TRUE) ^ (negate_capability == TRUE))){
+					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
+					if(!(((fm_capability & FM_CAP_WRITABLE)!=0) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -665,8 +665,8 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			if(g_strcmp0(conditions->capabilities[i], "Executable") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(!((fm_capability->isExecutable == TRUE) ^ (negate_capability == TRUE))){
+					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
+					if(!(((fm_capability & FM_CAP_EXECUTABLE)!=0) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -676,8 +676,8 @@ gboolean validate_conditions(FmConditions *conditions)
 
 			if(g_strcmp0(conditions->capabilities[i], "Local") == 0){
 				for(j=0; j<capabilities_array->len; ++j){
-					fm_capability = (FmCapabilities *)g_ptr_array_index(capabilities_array, j);
-					if(!(fm_capability->isLocal == TRUE) ^ (negate_capability == TRUE)){
+					fm_capability = *((FmCapabilities *)g_ptr_array_index(capabilities_array, j));
+					if(!(((fm_capability & FM_CAP_LOCAL)!=0) ^ (negate_capability == TRUE))){
 						capabilities = FALSE;
 						break;
 					}
@@ -715,7 +715,7 @@ gboolean match_folder_pair(gchar *folderlist_i, gchar *cwd)
 	return match;
 }
 
-gchar* sanitize(gchar *basename, gchar *init, gchar *fin)
+gchar* prepare_for_regex_matching(gchar *basename, gchar *init, gchar *fin)
 {
 	gchar **split_basename = g_strsplit(basename, init, 0);
 	gchar *reformed_basename = g_strjoinv(fin, split_basename);

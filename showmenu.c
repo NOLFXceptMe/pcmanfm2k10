@@ -77,7 +77,7 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 	/* Make entries into the path_list, manually */
 	FmPathList *path_list = fm_path_list_new();
 	/* "examples" is a directory, and "home" is a link, both of them have the mime type inode/directory */
-	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
+	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/examples"));
 	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/home"));
 	//fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/parser.c"));
 	fm_list_push_tail(path_list, fm_path_new("/home/npower/Code/GSOC/pcmanfm2k10/Einstein_german.ogg"));
@@ -186,18 +186,24 @@ void add_to_capabilities(gpointer data, gpointer user_data)
 {
 	FmFileInfo *file_info = (FmFileInfo *)data;
 	GPtrArray *capabilities = (GPtrArray *)user_data;
-	FmCapabilities *fm_capability = (FmCapabilities *)g_new0(FmCapabilities, 1);
+	FmCapabilities *fm_capability = g_new0(FmCapabilities, 1);
 	mode_t mode = file_info->mode;
+	//printf("%s has mode %o\n", fm_file_info_get_disp_name(file_info), mode);
 	
-	fm_capability->isOwner = (file_info->uid == getuid())?TRUE:FALSE;
-	fm_capability->isReadable = (S_IRUSR & mode)?TRUE:FALSE;
-	fm_capability->isWritable = (S_IWUSR & mode)?TRUE:FALSE;
-	fm_capability->isExecutable = (S_IXUSR & mode)?TRUE:FALSE;
+	*fm_capability |= (file_info->uid == getuid())?FM_CAP_OWNER:0;
+	*fm_capability |= (S_IRUSR & mode)?FM_CAP_READABLE:0;
+	*fm_capability |= (S_IWUSR & mode)?FM_CAP_WRITABLE:0;
+	*fm_capability |= (S_IXUSR & mode)?FM_CAP_EXECUTABLE:0;
+	//if(*fm_capability & FM_CAP_EXECUTABLE)
+		//printf("%s is executable\n", fm_file_info_get_disp_name(file_info));
 
-	gchar *scheme_restricted = g_strndup(fm_path_to_uri(fm_file_info_get_path(file_info)), 4);
-	fm_capability->isLocal = (g_strcmp0(scheme_restricted, "file") == 0)?TRUE:FALSE;
+	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
+	gchar *scheme = g_uri_parse_scheme(uri);
+	*fm_capability |= (g_strcmp0(scheme, "file") == 0)?FM_CAP_LOCAL:0;
+	g_free(scheme);
+	g_free(uri);
 
-	g_ptr_array_add(capabilities, (gpointer) fm_capability);
+	g_ptr_array_add(capabilities, fm_capability);
 }
 
 void add_to_schemes(gpointer data, gpointer user_data)
@@ -207,10 +213,7 @@ void add_to_schemes(gpointer data, gpointer user_data)
 	gchar *uri = fm_path_to_uri(fm_file_info_get_path(fi));
 	gsize i;
 
-	/* Now parse the scheme */
-	/* Using string.h functions. GLib doesn't have strcspn()? :O */
-	size_t colon_pos = strcspn(uri, ":");
-	gchar *scheme = g_strndup(uri, colon_pos), *scheme_i = NULL;
+	gchar *scheme = g_uri_parse_scheme(uri), *scheme_i = NULL;
 
 	for(i=0; i<schemes_array->len; ++i){
 		scheme_i = (gchar *)g_ptr_array_index(schemes_array, i);

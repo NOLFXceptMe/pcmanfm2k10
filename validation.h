@@ -10,16 +10,16 @@ void validate_menu(gpointer key, gpointer value, gpointer user_data);
 gboolean validate_conditions(FmConditions *conditions);
 
 gboolean match_folder_pair(gchar *, gchar *);
-gchar* sanitize(gchar *, gchar *, gchar *);
+gchar* prepare_for_regex_matching(gchar *, gchar *, gchar *);
 
-typedef struct _FmCapabilities FmCapabilities;
+typedef enum _FmCapabilities FmCapabilities;
 
-struct _FmCapabilities {
-	gboolean isOwner;
-	gboolean isReadable;
-	gboolean isWritable;
-	gboolean isExecutable;
-	gboolean isLocal;
+enum _FmCapabilities {
+	FM_CAP_OWNER = 1<<0,
+	FM_CAP_READABLE = 1<<1,
+	FM_CAP_WRITABLE = 1<<2,
+	FM_CAP_EXECUTABLE = 1<<3,
+	FM_CAP_LOCAL = 1<<4
 };
 
 #endif	/* _VALIDATION_H_ */

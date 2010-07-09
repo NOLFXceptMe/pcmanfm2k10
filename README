@@ -41,10 +41,10 @@ TODO for 8th July
 -----------------
 Fix implementations
 
-- Basenames [Can we use GNU libraries? #postpone ]
+- Basenames [DONE, on 9th]
 - Parameters %d and %D  [DONE]
 - Parameters %b and %B, %f and %F [DONE]
-- TryExec (if possible)
+- TryExec (if possible) [DONE, on 9th]
 - Make showmenu accept multiple files OR make it a module, and have a higher up collect the results. Recommend the former. [DONE]
 	- Made it a module :P
 - BUG: Oops. Parameters need to be shell escaped, etc.
@@ -56,5 +56,6 @@ Fix implementations
 TODO for 9th July
 -----------------
 
-- GLib provides a lot of functions. Replace own code with library functions.
-- Create a console program that can show these results, finalize output. [v0.1 for midterm evaluation?]
+- GLib provides a lot of functions. Replace own code with library functions. [DONE] [Partially]
+- Rewrite MimeTypes validation using GRegex. But later.
+- Create a console program that can show these results, finalize output. [v0.1 for midterm evaluation?] [DONE. Commit invariant: This program builds and works as expected.]
