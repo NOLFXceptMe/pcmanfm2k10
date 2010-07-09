@@ -10,6 +10,7 @@ void validate_menu(gpointer key, gpointer value, gpointer user_data);
 gboolean validate_conditions(FmConditions *conditions);
 
 gboolean match_folder_pair(gchar *, gchar *);
+gchar* sanitize(gchar *, gchar *, gchar *);
 
 typedef struct _FmCapabilities FmCapabilities;
 

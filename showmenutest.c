@@ -30,6 +30,7 @@ int main()
 	desktop_files_folder = g_dir_open(desktop_files_path, 0, &error);
 	if(desktop_files_folder == NULL){
 		fprintf(stderr, "%s\n", error->message);
+		g_error_free(error);
 		return -1;
 	}
 

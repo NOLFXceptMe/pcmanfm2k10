@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fnmatch.h>
 
 #include "parser.h"
 #include "validation.h"
@@ -177,6 +176,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	gboolean basenames = TRUE, matchcase = TRUE;
 	gboolean selectioncount = TRUE;
 	gboolean schemes = TRUE, folderlist = TRUE, capabilities = TRUE;
+	GError *error = NULL;
 
 	FILE *fp;
 	gchar line[255];
@@ -200,14 +200,15 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* TryExec validation */
-	/* FIXME: This is broken. */
+	gchar *try_exec_string = NULL, *try_exec_path = NULL;
 	if(conditions->tryexec != NULL){
 		/* Extract the first word of it */
-		if(g_strstrip(conditions->tryexec)[0] == '/'){				/* Absolute path */
-			if(!(g_file_test(conditions->tryexec, G_FILE_TEST_EXISTS) == TRUE && g_file_test(conditions->tryexec, G_FILE_TEST_IS_EXECUTABLE) == TRUE))
-				tryexec = FALSE;
-		} else {											/* Just a file name */
-		}
+		try_exec_string = g_strdup_printf("%s", conditions->tryexec);
+		try_exec_path = g_find_program_in_path(try_exec_string);
+		if(try_exec_path == NULL)
+			tryexec = FALSE;
+		g_free(try_exec_path);
+		g_free(try_exec_string);
 	}
 
 	if(tryexec == FALSE){
@@ -226,7 +227,7 @@ gboolean validate_conditions(FmConditions *conditions)
 	}
 
 	/* ShowIfTrue validation */
-	/* TODO: Used popen, should that be fine? */
+	/* Used popen */
 	if(conditions->showiftrue != NULL){
 		showiftrue = FALSE;
 		fp = popen(conditions->showiftrue, "r");
@@ -394,36 +395,65 @@ gboolean validate_conditions(FmConditions *conditions)
 
 	/* The following two conditions, matchcase and basenames are to be validated together */
 	/* Matchcase and Basenames evalutation*/
+	gchar *base_name_j = NULL;
 	if(conditions->n_basenames > 0){
 		matchcase = conditions->matchcase;
 
 		/* Basenames validation */
+		/* Sanitize: Replace the '.' character with "\." and '*' with ".*", in that order*/
+		for(i=0; i<conditions->n_basenames; ++i){
+			conditions->basenames[i] = sanitize(conditions->basenames[i], ".", "\\.");
+			conditions->basenames[i] = sanitize(conditions->basenames[i], "*", ".*");
+			//printf("%s\n", conditions->basenames[i]);
+		}
+
+		for(j=0; j<base_names->len; ++j){
+			base_name_j = (gchar *)g_ptr_array_index(base_names, j);
+			base_name_j = sanitize(base_name_j, ".", "\\.");
+			base_name_j = sanitize(base_name_j, "*", ".*");
+			g_ptr_array_index(base_names, j) = base_name_j;
+			//printf("%s\n", (gchar *)g_ptr_array_index(base_names, j));
+		}
+
+		GRegex *not_casesensitive_base_regex = NULL, *casesensitive_base_regex = NULL;
 		atleast_one_match = FALSE;
+
 		for(i=0;i<conditions->n_basenames;++i){
 			//printf("validating basename \"%s\"\n", conditions->basenames[i]);
 			if(g_strstrip(conditions->basenames[i])[0] == '!')							/* First pass, only deal with non-negating conditions */
 				continue;
 
-			if(g_strcmp0(conditions->basenames[i], "*") == 0)
-				break;
-
+			not_casesensitive_base_regex = g_regex_new(conditions->basenames[i], G_REGEX_CASELESS|G_REGEX_DOTALL, 0, &error);
+			if(error != NULL){
+				fprintf(stderr, "Problem with not_casesensitive_base_regex :: %s\n", error->message);
+				g_error_free(error);
+			}
+			casesensitive_base_regex = g_regex_new(conditions->basenames[i], G_REGEX_DOTALL, 0, &error);
+			if(error != NULL){
+				fprintf(stderr, "Problem with casesensitive_base_regex :: %s\n", error->message);
+				g_error_free(error);
+			}
+			
 			/* Iterate over the basenames of the selected items and validate */
 			for(j=0;j<base_names->len;++j){
-				//printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
-				if(matchcase == TRUE){
-					if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
-						atleast_one_match = TRUE;
-						break;
-					}
-				} else {
-					if(g_ascii_strcasecmp(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
-						atleast_one_match = TRUE;
-						break;
-					}
+				printf("Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+				if(casesensitive_base_regex == NULL || not_casesensitive_base_regex == NULL){
+					printf("1: Regexes are NULL\n");
 				}
+
+				if(matchcase == TRUE)
+					atleast_one_match = g_regex_match(casesensitive_base_regex, g_ptr_array_index(base_names, j), 0, NULL);
+				else
+					atleast_one_match = g_regex_match(not_casesensitive_base_regex, g_ptr_array_index(base_names, j), 0, NULL);
+
+				if(atleast_one_match == TRUE)
+					break;
 			}
 			if(atleast_one_match == TRUE)
 				break;
+
+			g_regex_unref(casesensitive_base_regex);
+			g_regex_unref(not_casesensitive_base_regex);
 		}
 
 		if(atleast_one_match == FALSE)
@@ -436,31 +466,35 @@ gboolean validate_conditions(FmConditions *conditions)
 					continue;
 
 				conditions->basenames[i] = conditions->basenames[i]+1;
-
+				not_casesensitive_base_regex = g_regex_new(conditions->basenames[i], G_REGEX_CASELESS, 0, NULL);
+				casesensitive_base_regex = g_regex_new(conditions->basenames[i], 0, 0, NULL);
+			
 				/* Iterate over the basenames of the selected items and validate */
 				for(j=0;j<base_names->len;++j){
-					//printf("Negation: Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
-					if(matchcase == TRUE){
-						if(g_strcmp0(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
-							atleast_one_negation = TRUE;
-							break;
-						}
-					} else {
-						if(g_ascii_strcasecmp(conditions->basenames[i], g_ptr_array_index(base_names, j)) == 0){
-							atleast_one_negation = TRUE;
-							break;
-						}
+					printf("Negation: Matching %s with %s\n", conditions->basenames[i], (char *)g_ptr_array_index(base_names, j));
+					if(casesensitive_base_regex == NULL || not_casesensitive_base_regex == NULL){
+						printf("0: Regexes are NULL\n");
 					}
+					
+					if(matchcase == TRUE)
+						atleast_one_negation = g_regex_match(casesensitive_base_regex, g_ptr_array_index(base_names, j), 0, NULL);
+					else
+						atleast_one_negation = g_regex_match(not_casesensitive_base_regex, g_ptr_array_index(base_names, j), 0, NULL);
+
+					if(atleast_one_negation == TRUE)
+						break;
 				}
+
 				if(atleast_one_negation == TRUE)
 					break;
+
+				g_regex_unref(casesensitive_base_regex);
+				g_regex_unref(not_casesensitive_base_regex);
 			}
 			if(atleast_one_negation == TRUE)
 				basenames = FALSE;
 		}
 	}
-
-
 
 	if(basenames == FALSE){
 		isValid = FALSE;
@@ -685,4 +719,15 @@ gboolean match_folder_pair(gchar *folderlist_i, gchar *cwd)
 
 	g_free(pattern);
 	return match;
+}
+
+gchar* sanitize(gchar *basename, gchar *init, gchar *fin)
+{
+	gchar **split_basename = g_strsplit(basename, init, 0);
+	gchar *reformed_basename = g_strjoinv(fin, split_basename);
+
+	g_free(basename);
+	g_strfreev(split_basename);
+
+	return reformed_basename;
 }
