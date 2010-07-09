@@ -29,10 +29,10 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 	gchar *pos = input_string + first_pos;
 	g_string_append_len(out_string, input_string, first_pos);
 	GString *g_string_i = NULL;
-	gchar *base_name = NULL, *file_name = NULL, *host_name = NULL, *user_name = NULL, *port = NULL, *scheme = NULL, *uri = NULL, *file_name_wo_ext = NULL, *ext_pos = NULL;
+	gchar *base_name = NULL, *base_dir = NULL, *file_name = NULL, *host_name = NULL, *user_name = NULL, *port = NULL, *scheme = NULL, *uri = NULL, *file_name_wo_ext = NULL, *ext_pos = NULL;
 	gboolean array_is_init = FALSE;
 	FmFileInfo *file_info_i = NULL, *file_info_j = NULL;
-	char temp[256], base_dir[1024];
+	char temp[256];
 	gboolean curr_dir_flag;
 
 	while((pos = strchr(pos, '%')) != NULL){
@@ -95,17 +95,15 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 			case 'd':
 				/* Works */
 				curr_dir_flag = FALSE;
-				memset(base_dir, 1024, 0);
 				if(array_is_init == FALSE){
 					for(i=0; i<len_file_list; ++i){
 						g_string_i = g_string_new(out_string->str);
 						file_info_i = fm_list_peek_nth(file_info_list, i);
-						//printf("File is %s\n", fm_file_info_get_disp_name(file_info_i));
 						if(fm_file_info_is_dir(file_info_i) == TRUE){
-							strcpy(base_dir, fm_path_to_str(fm_file_info_get_path(file_info_i)));
+							base_dir = fm_path_to_str(fm_file_info_get_path(file_info_i));
 						} else {
 							if(curr_dir_flag == FALSE){
-								getcwd(base_dir, 1024);
+								base_dir = g_get_current_dir();
 								curr_dir_flag = TRUE;
 							} else {
 								continue;
@@ -114,8 +112,9 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 						g_string_append(g_string_i, base_dir);
 						g_string_append_c(g_string_i, ' ');
 
-						//printf("Inserting %s\n", g_string_i->str);
 						g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+
+						g_free(base_dir);
 						g_string_free(g_string_i, TRUE);
 					}
 					break;
@@ -123,10 +122,10 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 
 				file_info_i = fm_list_peek_head(file_info_list);
 				if(fm_file_info_is_dir(file_info_i) == TRUE){
-						strcpy(base_dir, fm_path_to_str(fm_file_info_get_path(file_info_i)));
+					base_dir = fm_path_to_str(fm_file_info_get_path(file_info_i));
 				} else {
 					if(curr_dir_flag == FALSE){
-						getcwd(base_dir, 1024);
+						base_dir = g_get_current_dir();
 						curr_dir_flag = TRUE;
 					} else {
 						continue;
@@ -138,10 +137,10 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 					g_string_append_c(g_string_i, ' ');
 				}
 
+				g_free(base_dir);
 				break;
 			case 'D':
 				/* Works */
-				memset(base_dir, 1024, 0);
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
@@ -151,10 +150,10 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 					for(j=0; j<len_file_list; ++j){
 						file_info_j= fm_list_peek_nth(file_info_list, j);
 						if(fm_file_info_is_dir(file_info_j) == TRUE){
-							strcpy(base_dir, fm_path_to_str(fm_file_info_get_path(file_info_j)));
+							base_dir = fm_path_to_str(fm_file_info_get_path(file_info_j));
 						} else {
 							if(curr_dir_flag == FALSE){
-								getcwd(base_dir, 1024);
+								base_dir = g_get_current_dir();
 								curr_dir_flag = TRUE;
 							} else {
 								continue;
@@ -162,13 +161,14 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 						}
 						g_string_append(g_string_i, base_dir);
 						g_string_append_c(g_string_i, ' ');
+
+						g_free(base_dir);
 					}
 				}
 
 				break;
 			case 'f':
 				/* Works */
-				/* Is the same as %b for now */
 				if(array_is_init == FALSE){
 					for(i=0; i<len_file_list; ++i){
 						g_string_i = g_string_new(out_string->str);
@@ -178,6 +178,8 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 						g_string_append_c(g_string_i, ' ');
 
 						g_ptr_array_add(out_string_array, g_string_new(g_string_i->str));
+
+						g_free(file_name);
 						g_string_free(g_string_i, TRUE);
 					}
 					break;
@@ -191,10 +193,10 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 					g_string_append_c(g_string_i, ' ');
 				}
 
+				g_free(file_name);
 				break;
 			case 'F':
 				/* Works */
-				/* Is the same as %B for now */
 				if(array_is_init == FALSE)
 					g_ptr_array_add(out_string_array, g_string_new(out_string->str));
 
@@ -205,6 +207,8 @@ GPtrArray* substitute_parameters(gchar *input_string, FmFileInfoList *file_info_
 						file_name = (gchar *)fm_path_to_str(fm_file_info_get_path(file_info_j));
 						g_string_append(g_string_i, file_name);
 						g_string_append_c(g_string_i, ' ');
+
+						g_free(file_name);
 					}
 				}
 
@@ -504,9 +508,7 @@ gchar *get_port(FmFileInfo *file_info)
 gchar *get_scheme(FmFileInfo *file_info)
 {
 	gchar *uri = fm_path_to_uri(fm_file_info_get_path(file_info));
-	gsize scheme_len = strcspn(uri, ":");
-	gchar *scheme = g_strndup(uri, scheme_len);
+	gchar *scheme = g_uri_parse_scheme(uri);
 
 	return scheme;
 }
-

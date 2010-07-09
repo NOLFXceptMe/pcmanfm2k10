@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fnmatch.h>
 
 #include "parser.h"
 #include "validation.h"
@@ -669,48 +670,19 @@ gboolean validate_conditions(FmConditions *conditions)
 
 gboolean match_folder_pair(gchar *folderlist_i, gchar *cwd)
 {
-	gchar **folder_split_i = NULL, **cwd_split = NULL;
-	gboolean folderlist = TRUE;
-	gsize level_i = 0, level_j = 0;
+	gchar *pattern = NULL;
+	gboolean match;
+	g_strstrip(folderlist_i);
 
-	folder_split_i = g_strsplit(folderlist_i, "/", 0);
-	cwd_split = g_strsplit(cwd, "/", 0);
+	if(folderlist_i[strlen(folderlist_i)-1] != '/')
+		pattern = g_strconcat(folderlist_i, "/*", NULL);
+	else
+		pattern = g_strconcat(folderlist_i, "*", NULL);
 
-	while(folder_split_i[level_i] != NULL){
-		if((g_strcmp0(folder_split_i[level_i], "") == 0) && folder_split_i[level_i + 1] == NULL)
-			break;
+	//printf("Matching pattern \"%s\" against \"%s\"\n", pattern, cwd);
 
-		if(g_strcmp0(folder_split_i[level_i], "*") == 0){
-			while(g_strcmp0(folder_split_i[level_i], "*") == 0)			/* For the case when we write /path/to/ * / * / * */
-				level_i++;
+	match = g_pattern_match_simple(pattern, cwd);
 
-			if(folder_split_i[level_i] == NULL){
-				break;
-			}
-
-			while(cwd_split[level_j] != NULL){
-				if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
-					level_j++;
-				} else {
-					break;
-				}
-			}
-			if(cwd_split[level_j] == NULL){
-				folderlist = FALSE;
-				break;
-			}
-		}
-
-		if(g_strcmp0(folder_split_i[level_i], cwd_split[level_j]) != 0){
-			folderlist = FALSE;
-			break;
-		}
-
-		++level_i, ++level_j;
-	}
-
-	g_strfreev(folder_split_i);
-	g_strfreev(cwd_split);
-
-	return folderlist;
+	g_free(pattern);
+	return match;
 }

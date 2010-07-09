@@ -48,6 +48,8 @@ GPtrArray* showmenu(GPtrArray *desktop_files_array)
 
 	for(j=0; j<desktop_files_array->len; ++j){
 		desktop_entry = parse((gchar *)g_ptr_array_index(desktop_files_array, j));
+		if(desktop_entry == NULL)
+			continue;
 
 		fmProfileEntries = desktop_entry->fmProfileEntries;
 		fmActionEntries = desktop_entry->fmActionEntries;

@@ -15,15 +15,17 @@
 
 FmDesktopEntry* parse(gchar* file_name)
 {
-	gchar *base_name = strrchr(file_name, '/')+1;
+	if(file_name == NULL)
+		return NULL;
 
-	gchar *ext_pos = strrchr(base_name, '.');
-	if(ext_pos == NULL){
+	gchar *base_name = g_path_get_basename(file_name);
+	if(g_str_has_suffix(base_name, ".desktop") != TRUE){
 		fprintf(stderr, "PARSER:: Invalid file type\n");
 		return NULL;
 	}
 
-	gchar *desktop_file_id = g_strndup(base_name, strlen(base_name) - strlen(ext_pos));
+	gchar *desktop_file_id = g_strndup(base_name, strlen(base_name) - strlen(".desktop"));
+	g_free(base_name);
 
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;

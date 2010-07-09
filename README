@@ -55,4 +55,6 @@ Fix implementations
 
 TODO for 9th July
 -----------------
+
+- GLib provides a lot of functions. Replace own code with library functions.
 - Create a console program that can show these results, finalize output. [v0.1 for midterm evaluation?]
