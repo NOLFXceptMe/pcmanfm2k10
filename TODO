@@ -1,0 +1,61 @@
+Code during GSoC 2010, for the project PCManFM.
+
+Features tested
+---------------
+- Detect Actions, Profiles, and Menus
+- Expand according to parameters
+- Read in all data necessary and store in data structures
+
+- Implemented for Profiles
+-------------------------
+- Validate profiles according to conditions
+
+- Implemented for Actions
+-------------------------
+- Validate actions according to conditions and profiles [in that order]
+
+- Implemented for Menus
+-------------------------
+- Validate menus according to conditions and actions [in that order]
+
+- Implementation of Condition Validation
+----------------------------------------
+DONE: OnlyShowIn, NotShowIn
+DONE: TryExec
+TODO: ShowIfRegistered
+DONE: ShowIfTrue
+DONE: ShowIfRunning
+DONE: MimeTypes
+DONE: Basenames
+DONE: Matchcase
+DONE: SelectionCount
+DONE: Schemes
+DONE: Folders
+DONE: Capabilities
+
+- Implementation of Parameter support 
+-------------------------------------
+DONE: Parameter substitution at runtime (except for %d and %D)
+
+TODO for 8th July
+-----------------
+Fix implementations
+
+- Basenames [DONE, on 9th]
+- Parameters %d and %D  [DONE]
+- Parameters %b and %B, %f and %F [DONE]
+- TryExec (if possible) [DONE, on 9th]
+- Make showmenu accept multiple files OR make it a module, and have a higher up collect the results. Recommend the former. [DONE]
+	- Made it a module :P
+- BUG: Oops. Parameters need to be shell escaped, etc.
+- Test with multiple desktop files [DONE]
+- Create a console program that can show these results. [DONE]
+- Modify showmenu to pass the action structure as is, instead of it's name only [DONE]
+
+
+TODO for 9th July
+-----------------
+
+- GLib provides a lot of functions. Replace own code with library functions. [DONE] [Partially]
+- Rewrite MimeTypes validation using GRegex. But later.
+- Create a console program that can show these results, finalize output. [v0.1 for midterm evaluation?] [DONE. Commit invariant: This program builds and works as expected.]
